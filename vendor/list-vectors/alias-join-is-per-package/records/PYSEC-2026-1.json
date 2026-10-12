@@ -1,0 +1,11 @@
+{
+  "id": "PYSEC-2026-1",
+  "aliases": ["GHSA-aaaa-bbbb-cccc"],
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "acme-widgets"},
+     "versions": ["1.1.0"],
+     "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1.2.0"}]}]}
+  ]
+}

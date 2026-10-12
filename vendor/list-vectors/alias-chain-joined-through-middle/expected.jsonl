@@ -1,0 +1,1 @@
+{"e":"pypi","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","al":["GHSA-dddd-eeee-ffff","PYSEC-2026-1"],"v":["1.1.0"],"r":[{"i":"0","f":"1.2.0"},{"i":"1.0.0","l":"1.1.5"}],"all":false,"s":"critical","fx":"1.2.0","p":"2026-02-10T08:00:00Z","m":"2026-02-15T00:00:00Z","t":"Summary from the last record"}

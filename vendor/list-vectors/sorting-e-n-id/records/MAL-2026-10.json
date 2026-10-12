@@ -1,0 +1,9 @@
+{
+  "id": "MAL-2026-10",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "beta"}, "versions": ["2.0.0"]},
+    {"package": {"ecosystem": "npm", "name": "Beta"}, "versions": ["3.0.0"]}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "GHSA-aaaa-bbbb-cccc",
+  "aliases": ["GHSA-dddd-eeee-ffff"],
+  "published": "2026-02-12T00:00:00Z",
+  "modified": "2026-02-13T00:00:00Z",
+  "details": "Details from the middle record",
+  "database_specific": {"severity": "MODERATE"},
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "acme-widgets"}, "versions": ["1.1.0"]}
+  ]
+}

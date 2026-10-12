@@ -1,0 +1,2 @@
+{"e":"pypi","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","al":["GHSA-dddd-eeee-ffff"],"r":[{"i":"0","f":"1.2.0"}],"all":false,"s":"high","fx":"1.2.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"First advisory"}
+{"e":"pypi","n":"acme-widgets","k":"vuln","id":"PYSEC-2026-1","al":["GHSA-dddd-eeee-ffff"],"r":[{"i":"1.2.0","f":"1.3.0"}],"all":false,"s":"critical","fx":"1.3.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"Second advisory"}

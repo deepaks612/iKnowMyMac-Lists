@@ -1,0 +1,12 @@
+{
+  "id": "GHSA-dddd-eeee-ffff",
+  "aliases": ["CVE-2026-0001"],
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "Second advisory",
+  "database_specific": {"severity": "HIGH"},
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "acme-widgets"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "1.2.0"}, {"fixed": "1.3.0"}]}]}
+  ]
+}

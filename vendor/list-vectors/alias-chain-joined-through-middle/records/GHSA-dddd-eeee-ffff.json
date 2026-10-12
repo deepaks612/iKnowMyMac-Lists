@@ -1,0 +1,11 @@
+{
+  "id": "GHSA-dddd-eeee-ffff",
+  "published": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-15T00:00:00Z",
+  "summary": "Summary from the last record",
+  "database_specific": {"severity": "CRITICAL"},
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "acme-widgets"},
+     "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "1.0.0"}, {"last_affected": "1.1.5"}]}]}
+  ]
+}

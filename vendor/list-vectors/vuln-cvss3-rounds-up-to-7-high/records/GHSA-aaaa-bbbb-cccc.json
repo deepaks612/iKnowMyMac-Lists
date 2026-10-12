@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.6.0",
+  "id": "GHSA-aaaa-bbbb-cccc",
+  "aliases": ["CVE-2026-0001"],
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "acme-widgets reads files outside its folder",
+  "severity": [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H"}],
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "acme-widgets"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": "2.5.0"}]}]}
+  ]
+}

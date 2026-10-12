@@ -1,0 +1,2 @@
+{"e":"npm","n":"@acme/widgets","k":"mal","id":"MAL-2026-0006","v":["3.1.4"],"all":false,"p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"Malicious code in @acme/widgets (npm)"}
+{"e":"npm","n":"Acme_Widgets.JS","k":"mal","id":"MAL-2026-0006","v":["0.0.2"],"all":false,"p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"Malicious code in @acme/widgets (npm)"}

@@ -1,0 +1,15 @@
+{
+  "id": "GHSA-aaaa-bbbb-cccc",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "acme-widgets reads files outside its folder",
+  "database_specific": {"severity": "HIGH"},
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "acme-widgets"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": "2.5.0"}]}]},
+    {"package": {"ecosystem": "PyPI", "name": "acme-widgets"},
+     "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1.2.0"}]}]},
+    {"package": {"ecosystem": "Go", "name": "github.com/acme/widgets"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": "0.3.0"}]}]}
+  ]
+}

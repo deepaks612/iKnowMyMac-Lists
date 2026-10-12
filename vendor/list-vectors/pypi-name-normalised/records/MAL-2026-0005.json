@@ -1,0 +1,10 @@
+{
+  "id": "MAL-2026-0005",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "Malicious code in example-pkg-name (PyPI)",
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "Example_Pkg.name"}, "versions": ["0.1.0"]},
+    {"package": {"ecosystem": "PyPI", "name": "example--pkg_.NAME"}, "versions": ["0.2.0"]}
+  ]
+}

@@ -1,0 +1,1 @@
+{"e":"npm","n":"acme-widgets","k":"mal","id":"MAL-2026-0001","al":["GHSA-aaaa-bbbb-cccc"],"v":["0.30.4","1.14.1"],"r":[{"i":"1.14.1","l":"1.14.1"}],"all":false,"p":"2026-03-31T04:10:00Z","m":"2026-04-01T12:00:00Z","t":"Malicious code in acme-widgets (npm)"}

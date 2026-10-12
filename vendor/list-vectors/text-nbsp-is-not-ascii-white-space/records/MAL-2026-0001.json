@@ -1,0 +1,9 @@
+{
+  "id": "MAL-2026-0001",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": " Malicious  code  in left-pad-demo ",
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "left-pad-demo"}, "versions": ["1.3.1"]}
+  ]
+}

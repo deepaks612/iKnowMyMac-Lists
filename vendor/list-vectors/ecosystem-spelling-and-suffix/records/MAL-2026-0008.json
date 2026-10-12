@@ -1,0 +1,15 @@
+{
+  "id": "MAL-2026-0008",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "Malicious code in the acme family",
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "acme-one"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "pypi", "name": "acme-two"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "PYPI:registry-mirror", "name": "acme-three"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "NPM", "name": "acme-four"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "npm:mirror", "name": "acme-five"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "npmjs", "name": "acme-six"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "crates.io", "name": "acme-seven"}, "versions": ["1.0.0"]}
+  ]
+}

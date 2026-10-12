@@ -1,0 +1,11 @@
+{
+  "id": "MAL-2026-0003",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "Malicious code in acme-widgets (npm)",
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "acme-widgets"},
+     "versions": ["2.4.2", "2.4.1"],
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}]}]}
+  ]
+}

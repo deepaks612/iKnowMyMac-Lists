@@ -1,0 +1,12 @@
+{
+  "id": "GHSA-aaaa-bbbb-cccc",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-04-01T00:00:00Z",
+  "withdrawn": "2026-04-01T00:00:00Z",
+  "summary": "acme-widgets reads files outside its folder",
+  "database_specific": {"severity": "HIGH"},
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "acme-widgets"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": "2.5.0"}]}]}
+  ]
+}

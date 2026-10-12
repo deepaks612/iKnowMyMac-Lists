@@ -1,0 +1,2 @@
+{"e":"npm","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","r":[{"i":"0","f":"1.9.0"},{"i":"1.9.5","f":"1.10.0"}],"all":false,"s":"high","fx":"1.10.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"acme-widgets reads files outside its folder"}
+{"e":"npm","n":"left-pad-demo","k":"vuln","id":"GHSA-dddd-eeee-ffff","r":[{"i":"0","f":"2.0.0-rc.1"},{"i":"2.0.0-rc.2","f":"2.0.0"}],"all":false,"s":"critical","fx":"2.0.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"left-pad-demo runs a command from its input"}

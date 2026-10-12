@@ -1,0 +1,1 @@
+{"e":"npm","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","al":["CVE-2026-0001"],"r":[{"i":"0","f":"v1.9.0"},{"i":"1.9.5","f":"1.10"}],"all":false,"s":"high","fx":"1.10","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"acme-widgets reads files outside its folder"}

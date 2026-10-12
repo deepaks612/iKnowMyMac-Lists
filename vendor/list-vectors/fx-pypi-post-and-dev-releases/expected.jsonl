@@ -1,0 +1,1 @@
+{"e":"pypi","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","r":[{"i":"0","f":"1.0.post1"},{"i":"1.0.post2","f":"1.0.1.dev1"}],"all":false,"s":"high","fx":"1.0.1.dev1","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"acme-widgets reads files outside its folder"}

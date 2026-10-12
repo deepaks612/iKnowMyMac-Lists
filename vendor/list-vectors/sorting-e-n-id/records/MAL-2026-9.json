@@ -1,0 +1,9 @@
+{
+  "id": "MAL-2026-9",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "zeta"}, "versions": ["1.0.0"]},
+    {"package": {"ecosystem": "npm", "name": "beta"}, "versions": ["1.0.0"]}
+  ]
+}

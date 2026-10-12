@@ -1,0 +1,9 @@
+{
+  "id": "MAL-2026-0003",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "affected": [
+    {"package": {"ecosystem": "PyPI", "name": "alpha"}, "versions": ["5.0.0"]},
+    {"package": {"ecosystem": "npm", "name": "alpha"}, "versions": ["4.0.0"]}
+  ]
+}

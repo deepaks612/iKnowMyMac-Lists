@@ -1,0 +1,6 @@
+_site/
+_site.staging/
+work/
+__pycache__/
+*.pem
+.DS_Store

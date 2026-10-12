@@ -1,0 +1,2 @@
+{"e":"pypi","n":"acme-widgets","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","r":[{"i":"0","f":"1.9.0"},{"i":"1.9.2","f":"1.10.0"}],"all":false,"s":"high","fx":"1.10.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"acme-widgets reads files outside its folder"}
+{"e":"pypi","n":"example-pkg-name","k":"vuln","id":"GHSA-dddd-eeee-ffff","r":[{"i":"0","f":"2.0.0rc1"},{"i":"2.0.0rc2","f":"2.0.0"}],"all":false,"s":"high","fx":"2.0.0","p":"2026-03-01T10:00:00Z","m":"2026-03-02T11:30:00Z","t":"example-pkg-name runs a command from its input"}

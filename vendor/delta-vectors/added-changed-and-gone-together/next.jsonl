@@ -1,0 +1,3 @@
+{"e":"npm","n":"alpha-demo","k":"mal","id":"MAL-2026-0001","v":["1.0.0","1.0.1"],"all":false,"p":"2026-09-30T12:00:00Z","m":"2026-10-05T08:00:00Z","t":"Malicious code in alpha-demo (npm)"}
+{"e":"npm","n":"gamma-demo","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","r":[{"i":"0","f":"2.0.0"}],"all":false,"s":"high","fx":"2.0.0","p":"2026-08-01T00:00:00Z","m":"2026-09-01T00:00:00Z","t":"A hole in gamma-demo"}
+{"e":"npm","n":"beta-demo","k":"mal","id":"MAL-2026-0002","all":true,"p":"2026-09-30T12:00:00Z","m":"2026-10-01T00:00:00Z","t":"Malicious code in beta-demo (npm)"}

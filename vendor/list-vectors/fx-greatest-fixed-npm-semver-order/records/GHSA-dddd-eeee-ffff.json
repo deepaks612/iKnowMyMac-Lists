@@ -1,0 +1,11 @@
+{
+  "id": "GHSA-dddd-eeee-ffff",
+  "published": "2026-03-01T10:00:00Z",
+  "modified": "2026-03-02T11:30:00Z",
+  "summary": "left-pad-demo runs a command from its input",
+  "database_specific": {"severity": "CRITICAL"},
+  "affected": [
+    {"package": {"ecosystem": "npm", "name": "left-pad-demo"},
+     "ranges": [{"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": "2.0.0-rc.1"}, {"introduced": "2.0.0-rc.2"}, {"fixed": "2.0.0"}]}]}
+  ]
+}

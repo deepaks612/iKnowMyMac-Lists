@@ -1,0 +1,145 @@
+# Builds, signs, checks and publishes the iKnowMyMac package list to GitHub Pages.
+# Everything it does is in scripts/publish.py, which runs the same way on any machine (README.md).
+# Only GitHub's own actions are used, each pinned to a commit.
+name: Publish the package list
+
+on:
+  schedule:
+    # Hourly at 17 past. The public exports are rewritten a few minutes after the hour, and GitHub's scheduler is
+    # busiest on the hour. A run that finds nothing new publishes nothing.
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      rebase:
+        description: "Rebuild the whole list (a new base) now"
+        type: boolean
+        default: false
+      allow_shrink:
+        description: "Accept, this once, a list much smaller than the last (only when the public data really shrank)"
+        type: boolean
+        default: false
+
+permissions: {}
+
+# One at a time, in order: a run never overtakes the one before it.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, sign and check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      publish: ${{ steps.run.outputs.publish }}
+      kind: ${{ steps.run.outputs.kind }}
+      generated: ${{ steps.run.outputs.generated }}
+      site: ${{ steps.pages.outputs.base_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The site's address
+        id: pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: The builder is the one the app repository owns
+        run: scripts/check-vendor.sh
+      - name: Tests (made-up records and a key made on the spot)
+        run: python3 -I -B -m unittest discover -s tests
+      - name: Build, sign and check
+        id: run
+        env:
+          PACKAGE_LIST_SIGNING_KEY: ${{ secrets.PACKAGE_LIST_SIGNING_KEY }}
+          SITE: ${{ steps.pages.outputs.base_url }}
+          REBASE: ${{ inputs.rebase }}
+          ALLOW_SHRINK: ${{ inputs.allow_shrink }}
+        run: |
+          set -eu
+          set -- run --site _site --previous "$SITE" --work "$RUNNER_TEMP/work"
+          if [ "${REBASE:-false}" = "true" ]; then set -- "$@" --force-base; fi
+          if [ "${ALLOW_SHRINK:-false}" = "true" ]; then set -- "$@" --allow-shrink; fi
+          python3 -I -B scripts/publish.py "$@"
+      - name: Hand the files to Pages
+        if: steps.run.outputs.publish == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    name: Publish
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  check:
+    name: The live site serves what was built
+    needs: [build, deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify the published files against the committed public key
+        env:
+          SITE: ${{ needs.build.outputs.site }}
+          GENERATED: ${{ needs.build.outputs.generated }}
+        run: |
+          set -eu
+          # The site can serve the previous files for a few minutes after a deploy. `verify` asks the way the app
+          # does (it accepts gzip), so what it checks is the bytes a Mac would be given.
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            if python3 -I -B scripts/publish.py verify --site "$SITE" --expect-generated "$GENERATED"; then
+              curl -sSI -A "iKnowMyMac-Lists/1 (publish check)" -H "Accept-Encoding: gzip, deflate, br" "$SITE/packages-v1.delta.jsonl.gz.sig" \
+                | grep -i -E '^(HTTP|etag|content-type|content-encoding|cache-control|last-modified)' || true
+              exit 0
+            fi
+            sleep 40
+          done
+          echo "The live site still does not serve the list built at $GENERATED" >&2
+          exit 1
+
+  record:
+    # Once per new base (about weekly): one line in ledger/bases.jsonl. It is a public record of every base that
+    # was signed, and it is repository activity: GitHub switches scheduled workflows off in a public repository
+    # that has had none for 60 days.
+    name: Record the new base
+    needs: [build, check]
+    if: needs.build.outputs.kind == 'base'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Append to the ledger and push
+        env:
+          SITE: ${{ needs.build.outputs.site }}
+        run: |
+          set -eu
+          mkdir -p ledger
+          curl -sS --fail -A "iKnowMyMac-Lists/1 (ledger)" "$SITE/status.json" \
+            | python3 -I -c 'import json, sys; s = json.load(sys.stdin); print(json.dumps({"generated": s["base"]["generated"], "sha256": s["base"]["sha256"], "bytes": s["base"]["bytes"], "rows": s["base"]["rows"]}))' \
+            >> ledger/bases.jsonl
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ledger/bases.jsonl
+          git commit -m "chore(ledger): base of $(tail -n 1 ledger/bases.jsonl | python3 -I -c 'import json, sys; print(json.load(sys.stdin)["generated"])')"
+          git push

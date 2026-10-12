@@ -1,0 +1,1 @@
+{"e":"pypi","n":"delta-demo","k":"vuln","id":"GHSA-dddd-eeee-ffff","al":["CVE-2026-1111","PYSEC-2026-11"],"r":[{"i":"0","f":"4.2.0"}],"all":false,"s":"critical","fx":"4.2.0","p":"2026-08-01T00:00:00Z","m":"2026-10-07T00:00:00Z","t":"A hole in delta-demo"}

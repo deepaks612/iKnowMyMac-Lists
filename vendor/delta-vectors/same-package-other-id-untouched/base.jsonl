@@ -1,0 +1,2 @@
+{"e":"npm","n":"gamma-demo","k":"vuln","id":"GHSA-aaaa-bbbb-cccc","r":[{"i":"0","f":"2.0.0"}],"all":false,"s":"high","fx":"2.0.0","p":"2026-08-01T00:00:00Z","m":"2026-09-01T00:00:00Z","t":"A hole in gamma-demo"}
+{"e":"npm","n":"gamma-demo","k":"mal","id":"MAL-2026-0003","v":["3.1.4"],"all":false,"p":"2026-09-30T12:00:00Z","m":"2026-10-01T00:00:00Z","t":"Malicious code in gamma-demo (npm)"}

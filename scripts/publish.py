@@ -47,6 +47,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "packages-v1.jsonl.gz"
 DELTA = "packages-v1.delta.jsonl.gz"
 STATUS = "status.json"
+# PRD_v1.5.1 P97: the hand-checked runtime list (the app repository's docs/api/runtime-list-v1.md). It is edited in
+# runtimes/, checked by vendor/runtime-validate.py, signed with the same key and published beside the package list.
+RUNTIMES = "runtimes-v1.json"
+RUNTIMES_SOURCE = os.path.join(ROOT, "runtimes", RUNTIMES)
 PUBLIC_KEY_FILE = os.path.join(ROOT, "keys", "package-list-public-key.txt")
 
 SOURCES = [
@@ -335,6 +339,27 @@ def get_file(location, name, dest):
 # ---------------------------------------------------------------------------------------------------------------------
 # The builder (vendor/build.py, owned by the app repository)
 
+def load_runtimes(path, old):
+    """The runtime list to publish: its bytes, checked by the vendored validator, and its status record. Refused
+    when it is not valid or would go backwards against what is published."""
+    spec = importlib.util.spec_from_file_location("runtime_validate", os.path.join(ROOT, "vendor", "runtime-validate.py"))
+    validate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(validate)
+    with open(path, "rb") as fh:
+        raw = fh.read()
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as error:
+        raise Refused("%s is not UTF-8 JSON: %s" % (RUNTIMES, error))
+    published = (old or {}).get("runtimes") or {}
+    problems = validate.problems_in(data, len(raw), {"generated": published["generated"]}
+                                    if published.get("sha256") not in (None, hashlib.sha256(raw).hexdigest()) else None)
+    if problems:
+        raise Refused("%s: %s" % (RUNTIMES, "; ".join(problems)))
+    return raw, {"file": RUNTIMES, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                 "generated": data["generated"]}
+
+
 def load_builder():
     path = os.path.join(ROOT, "vendor", "build.py")
     spec = importlib.util.spec_from_file_location("package_list_build", path)
@@ -486,6 +511,8 @@ def run(args):
     rules_changed = bool(old) and old.get("builder", {}).get("sha256") != builder_sha
     key_changed = bool(old) and old.get("publicKey") != public_text
     force_base = args.force_base or rules_changed or key_changed or not old
+    runtimes_raw, runtimes_record = load_runtimes(args.runtimes or RUNTIMES_SOURCE, old)
+    runtimes_changed = bool(old) and (old.get("runtimes") or {}).get("sha256") != runtimes_record["sha256"]
     if args.source_dir:
         paths = {label: os.path.join(args.source_dir, "%s-all.zip" % label) for label, _ in SOURCES}
         records = {label: {"name": label, "url": url, "etag": '"%s"' % sha256_of(paths[label])[:32], "lastModified": None,
@@ -493,10 +520,10 @@ def run(args):
         known = {s["name"]: s.get("etag") for s in old.get("sources", [])} if old else {}
         changed = any(records[label]["etag"] != known.get(label) for label, _ in SOURCES)
     else:
-        paths, records, changed = obtain_sources(work, previous, force_base, args.as_of)
+        paths, records, changed = obtain_sources(work, previous, force_base or runtimes_changed, args.as_of)
 
     changed_at = generated if changed or not old else old.get("sourcesChangedAt", old["generated"])
-    if not changed and not force_base:
+    if not changed and not force_base and not runtimes_changed:
         idle = now - seconds_of(changed_at)
         if idle > stale_after:
             raise Refused("neither public export has changed for %.0f hours (they usually change most hours): the "
@@ -576,6 +603,10 @@ def run(args):
         log("a new base (%s): %d bytes" % (reason, len(packed)))
     write_bytes(delta_path, delta_packed)
     write_signature(delta_path + ".sig", sign(openssl, private_pem, delta_path))
+    write_bytes(os.path.join(staging, RUNTIMES), runtimes_raw)
+    write_signature(os.path.join(staging, RUNTIMES + ".sig"), sign(openssl, private_pem, os.path.join(staging, RUNTIMES)))
+    if runtimes_changed:
+        log("the runtime list changed: %s (%d bytes)" % (runtimes_record["generated"], runtimes_record["bytes"]))
     del private_pem
 
     gone = sum(1 for r in delta_rows if r.get("gone") is True)
@@ -588,6 +619,7 @@ def run(args):
                  "bytes": os.path.getsize(base_path), "rows": info["rows"]},
         "delta": {"file": DELTA, "sha256": sha256_of(delta_path), "bytes": os.path.getsize(delta_path),
                   "changed": len(delta_rows) - gone, "gone": gone},
+        "runtimes": runtimes_record,
         "publicKey": public_text,
         "builder": {"sha256": builder_sha},
         "sources": [records[label] for label, _ in SOURCES],
@@ -609,7 +641,8 @@ def run(args):
         raise Refused("the staged publication does not verify: " + "; ".join(problems))
     # The same content gets the same file times, so an unchanged file looks unchanged to whatever serves it.
     for name, when in ((BASE, info["generated"]), (BASE + ".sig", info["generated"]), (DELTA, generated),
-                       (DELTA + ".sig", generated), (STATUS, generated), ("index.html", generated)):
+                       (DELTA + ".sig", generated), (STATUS, generated), ("index.html", generated),
+                       (RUNTIMES, runtimes_record["generated"]), (RUNTIMES + ".sig", runtimes_record["generated"])):
         os.utime(os.path.join(staging, name), (seconds_of(when), seconds_of(when)))
     shutil.rmtree(site, ignore_errors=True)
     os.replace(staging, site)
@@ -655,6 +688,16 @@ def verify_folder(folder, openssl, public_text, public_raw, build):
             problems.append("%s.sig is missing or not base64 of 64 bytes" % name)
         elif not verify_both(openssl, public_raw, path, signature):
             problems.append("%s: the signature does not verify against the committed public key" % name)
+    runtimes = status.get("runtimes")
+    if runtimes:
+        path = os.path.join(folder, RUNTIMES)
+        signature = read_signature(path + ".sig")
+        if not os.path.isfile(path):
+            problems.append("%s is missing" % RUNTIMES)
+        elif signature is None or not verify_both(openssl, public_raw, path, signature):
+            problems.append("%s: the signature does not verify against the committed public key" % RUNTIMES)
+        elif sha256_of(path) != runtimes.get("sha256") or os.path.getsize(path) != runtimes.get("bytes"):
+            problems.append("status.json runtimes does not describe %s" % RUNTIMES)
     if problems:
         return problems
     try:
@@ -696,6 +739,11 @@ def verify(args):
             for name in (STATUS, BASE, BASE + ".sig", DELTA, DELTA + ".sig"):
                 if not get_file(folder, name, os.path.join(tmp, name)):
                     raise Refused("%s/%s is not there" % (folder.rstrip("/"), name))
+            with open(os.path.join(tmp, STATUS), encoding="utf-8") as fh:
+                if json.load(fh).get("runtimes"):
+                    for name in (RUNTIMES, RUNTIMES + ".sig"):
+                        if not get_file(folder, name, os.path.join(tmp, name)):
+                            raise Refused("%s/%s is not there" % (folder.rstrip("/"), name))
             folder = tmp
         problems = verify_folder(folder, openssl, public_text, public_raw, build)
         if problems:
@@ -723,6 +771,7 @@ def main(argv=None):
     r.add_argument("--allow-shrink", action="store_true", help="accept, this once, a list much smaller than the last")
     r.add_argument("--source-dir", help="use npm-all.zip and pypi-all.zip from this folder instead of downloading (tests)")
     r.add_argument("--now", help="the build time, YYYY-MM-DDTHH:MM:SSZ (tests)")
+    r.add_argument("--runtimes", help="the runtime list to publish (default: runtimes/runtimes-v1.json)")
     r.add_argument("--as-of", help="build the list as it stood at this time (trial runs and measuring only)")
     v = sub.add_parser("verify", help="check a publication against the committed public key")
     v.add_argument("--site", required=True, help="a folder, or the site's https URL")

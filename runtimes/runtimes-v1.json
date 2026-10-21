@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-10-21T18:30:00Z",
+ "generated": "2026-10-21T19:30:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -213,7 +213,8 @@
      }
     ]
    },
-   "source": "https://thehackernews.com/2026/10/eight-emudhra-ca-keys-compromised.html"
+   "source": "https://thehackernews.com/2026/10/eight-emudhra-ca-keys-compromised.html",
+   "learnMore": "https://iknowmymac.com/guides/emudhra-certificate-incident-mac"
   },
   {
    "id": "php2shell-2026-10",
@@ -227,7 +228,8 @@
      "php-2026-10-21"
     ]
    },
-   "source": "https://www.php.net/"
+   "source": "https://www.php.net/",
+   "learnMore": "https://iknowmymac.com/guides/php2shell-cve-2026-109618-mac"
   },
   {
    "id": "node-2026-10",
@@ -240,7 +242,8 @@
      "node-2026-10-21"
     ]
    },
-   "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases"
+   "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+   "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
   }
  ]
 }

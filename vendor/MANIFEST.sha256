@@ -171,3 +171,4 @@ f73d709018eea1ecd5bac81f6fbc68ff5a2a04b5089a532771c8034b1eefd1f5  list-vectors/w
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  list-vectors/withdrawn-no-row/expected.jsonl
 25cb05a794c87a77a7bdbda7f8c7eccc97023221d8f433f61cd08a12bd9182fa  list-vectors/withdrawn-no-row/records/GHSA-aaaa-bbbb-cccc.json
 276f5f9f3cc21c2d775ab6ad32c15b90e69e758f7ae730504afda3cf767179bf  list-vectors/withdrawn-no-row/records/MAL-2026-0001.json
+75a8bf38cc61681bcf9ea0783446437b7bdf9ce00ceb050d67fd0e15b176d362  runtime-validate.py

@@ -1,0 +1,249 @@
+{
+ "format": 1,
+ "kind": "runtimes",
+ "generated": "2026-10-21T19:30:00Z",
+ "runtimes": [
+  {
+   "id": "node",
+   "name": "Node.js",
+   "lineDepth": 1,
+   "lines": [
+    {
+     "line": "26",
+     "status": "supported"
+    },
+    {
+     "line": "25",
+     "status": "endOfLife",
+     "since": "2026-06-01"
+    },
+    {
+     "line": "24",
+     "status": "supported"
+    },
+    {
+     "line": "23",
+     "status": "endOfLife",
+     "since": "2025-06-01"
+    },
+    {
+     "line": "22",
+     "status": "supported"
+    },
+    {
+     "line": "21",
+     "status": "endOfLife",
+     "since": "2024-06-01"
+    },
+    {
+     "line": "20",
+     "status": "endOfLife",
+     "since": "2026-04-30"
+    }
+   ],
+   "source": "https://github.com/nodejs/Release/blob/main/schedule.json"
+  },
+  {
+   "id": "php",
+   "name": "PHP",
+   "lineDepth": 2,
+   "lines": [
+    {
+     "line": "8.5",
+     "status": "supported"
+    },
+    {
+     "line": "8.4",
+     "status": "supported"
+    },
+    {
+     "line": "8.3",
+     "status": "supported"
+    },
+    {
+     "line": "8.2",
+     "status": "supported"
+    },
+    {
+     "line": "8.1",
+     "status": "endOfLife",
+     "since": "2025-12-31"
+    }
+   ],
+   "source": "https://www.php.net/supported-versions.php"
+  },
+  {
+   "id": "go",
+   "name": "Go",
+   "lineDepth": 2,
+   "lines": [
+    {
+     "line": "1.27",
+     "status": "supported"
+    },
+    {
+     "line": "1.26",
+     "status": "supported"
+    },
+    {
+     "line": "1.25",
+     "status": "endOfLife"
+    }
+   ],
+   "source": "https://go.dev/doc/devel/release"
+  }
+ ],
+ "releases": [
+  {
+   "id": "node-2026-10-21",
+   "runtime": "node",
+   "date": "2026-10-21",
+   "severity": "high",
+   "title": "Node.js October 2026 security release",
+   "fixed": {
+    "26": "26.12.1",
+    "24": "24.22.1",
+    "22": "22.23.4"
+   },
+   "cves": [
+    "CVE-2026-111497",
+    "CVE-2026-105482",
+    "CVE-2026-105483",
+    "CVE-2026-106069"
+   ],
+   "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases"
+  },
+  {
+   "id": "php-2026-10-21",
+   "runtime": "php",
+   "date": "2026-10-21",
+   "severity": "critical",
+   "title": "PHP2Shell: remote code execution in PHP",
+   "fixed": {
+    "8.5": "8.5.12",
+    "8.4": "8.4.27",
+    "8.3": "8.3.36",
+    "8.2": "8.2.35"
+   },
+   "cves": [
+    "CVE-2026-109618",
+    "CVE-2026-109619"
+   ],
+   "source": "https://www.php.net/"
+  },
+  {
+   "id": "go-2026-10-19",
+   "runtime": "go",
+   "date": "2026-10-19",
+   "severity": "high",
+   "title": "Go stops trusting the eMudhra certificates (crypto/x509)",
+   "fixed": {
+    "1.27": "1.27.3",
+    "1.26": "1.26.10"
+   },
+   "cves": [],
+   "source": "https://go.dev/doc/devel/release"
+  }
+ ],
+ "roots": [
+  {
+   "id": "emsign-ecc-root-g3",
+   "name": "emSign ECC Root CA - G3",
+   "spki": "8d417db2dd8bf5e3084d1e3f196d583849d81bdd4c00c70b9d39369e96b8c782",
+   "sha256": "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b",
+   "role": "issuer",
+   "source": "https://github.com/Homebrew/homebrew-core/blob/main/Formula/c/ca-certificates.rb"
+  },
+  {
+   "id": "sectigo-aaa",
+   "name": "AAA Certificate Services",
+   "spki": "bd153ed7b0434f6886b17bce8bbe84ed340c7132d702a8f4fa318f756ecbd6f3",
+   "sha256": "d7a7a0fb5d7e2731d771e9484ebcdef71d5f0c3e0a2948782bc83ee0ea699ef4",
+   "role": "crossSigner",
+   "source": "https://github.com/Homebrew/homebrew-core/blob/main/Formula/c/ca-certificates.rb"
+  }
+ ],
+ "fixedPackages": [
+  {
+   "id": "homebrew-ca-certificates",
+   "kind": "homebrew",
+   "name": "ca-certificates",
+   "fixed": "2026-09-25_1",
+   "incident": "emudhra-2026-10",
+   "source": "https://github.com/Homebrew/homebrew-core/blob/main/Formula/c/ca-certificates.rb"
+  },
+  {
+   "id": "composer-ca-bundle",
+   "kind": "composer",
+   "name": "composer/ca-bundle",
+   "fixed": [
+    "1.6.0",
+    "1.4.16"
+   ],
+   "incident": "emudhra-2026-10",
+   "source": "https://github.com/composer/ca-bundle/releases"
+  }
+ ],
+ "incidents": [
+  {
+   "id": "emudhra-2026-10",
+   "title": "eMudhra certificates",
+   "date": "2026-10-17",
+   "severity": "high",
+   "summary": "Eight eMudhra certificates had private keys anyone could work out. Tools that carry their own certificate list still trust them until they are updated.",
+   "notAffected": "Safari, Chrome and Firefox already block these certificates (Apple from 19 October).",
+   "covers": {
+    "releases": [
+     "node-2026-10-21",
+     "go-2026-10-19"
+    ],
+    "roots": [
+     "emsign-ecc-root-g3",
+     "sectigo-aaa"
+    ],
+    "fixedPackages": [
+     "homebrew-ca-certificates",
+     "composer-ca-bundle"
+    ],
+    "packageAdvisories": [
+     {
+      "e": "pypi",
+      "n": "certifi",
+      "id": "GHSA-6q48-6c7w-9gw2"
+     }
+    ]
+   },
+   "source": "https://thehackernews.com/2026/10/eight-emudhra-ca-keys-compromised.html",
+   "learnMore": "https://iknowmymac.com/guides/emudhra-certificate-incident-mac"
+  },
+  {
+   "id": "php2shell-2026-10",
+   "title": "PHP2Shell",
+   "date": "2026-10-21",
+   "severity": "critical",
+   "summary": "Two flaws let anyone who can reach a PHP site run code on it, before any login. PHP 8.1 and older get no fix.",
+   "notAffected": "A PHP that only runs on this Mac and is not reachable from other computers is much harder to attack, but should still be updated.",
+   "covers": {
+    "releases": [
+     "php-2026-10-21"
+    ]
+   },
+   "source": "https://www.php.net/",
+   "learnMore": "https://iknowmymac.com/guides/php2shell-cve-2026-109618-mac"
+  },
+  {
+   "id": "node-2026-10",
+   "title": "Node.js October security release",
+   "date": "2026-10-21",
+   "severity": "high",
+   "summary": "Ten fixes, four of them high: two ways to pass a certificate for the wrong site, a crash in Brotli decompression that can run code, and DNS names cut at hidden characters. It also blocks the eMudhra certificates.",
+   "covers": {
+    "releases": [
+     "node-2026-10-21"
+    ]
+   },
+   "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+   "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
+  }
+ ]
+}

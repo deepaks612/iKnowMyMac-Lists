@@ -15,6 +15,17 @@ serves it. There are no API keys and no paid data.
 | Sources | The public OSV exports for npm and PyPI, which carry the OpenSSF Malicious Packages records and the GitHub and PyPI advisory databases. Credits and licences: [NOTICE.md](NOTICE.md) |
 | Signing | Ed25519. The private key exists only as the repository secret `PACKAGE_LIST_SIGNING_KEY` and in the owner's offline copy. The public key is in `keys/package-list-public-key.txt` and in the app |
 
+## The runtime list (`runtimes/runtimes-v1.json`)
+A second, small file published beside the package list (iKnowMyMac 1.5.1): which Node.js, PHP and Go release lines
+still get security fixes, which version fixes each security release, which root certificates an incident makes
+untrustworthy, and the incident cards the app shows. Its format is the app repository's
+`docs/api/runtime-list-v1.md`. **It is written by hand**, every value from the primary source named in its row.
+
+To change it: edit `runtimes/runtimes-v1.json`, raise `generated`, run
+`python3 -I vendor/runtime-validate.py runtimes/runtimes-v1.json`, commit and push. The next hourly run (or "Run
+workflow") checks, signs and publishes it as `runtimes-v1.json` + `.sig`, even when the package list has not changed.
+A file that is invalid, uses a banned word, or is not newer than the published one is refused and nothing changes.
+
 ## What is in here
 - `scripts/publish.py`: the one script. Downloads the two exports with conditional requests, builds a base or a
   delta, signs, verifies, and lays out the folder to publish. The workflow calls it; it runs the same way on a Mac.

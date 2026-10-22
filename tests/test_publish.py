@@ -116,7 +116,8 @@ class PublishTests(unittest.TestCase):
         self.assertEqual((s["rows"], s["generated"], s["base"]["generated"], s["delta"]["changed"], s["delta"]["gone"]),
                          (3, "2026-10-04T04:17:00Z", "2026-10-04T04:17:00Z", 0, 0))
         self.assertEqual(sorted(os.listdir(w.site)), sorted(["LICENSE-APACHE-2.0.txt", "NOTICE.txt", "index.html", "packages-v1.delta.jsonl.gz",
-                         "packages-v1.delta.jsonl.gz.sig", "packages-v1.jsonl.gz", "packages-v1.jsonl.gz.sig", "status.json"]))
+                         "packages-v1.delta.jsonl.gz.sig", "packages-v1.jsonl.gz", "packages-v1.jsonl.gz.sig", "runtimes-v1.json",
+                         "runtimes-v1.json.sig", "status.json"]))
         header = w.lines(publish.DELTA)[0]
         self.assertEqual(header["kind"], "delta")
         self.assertEqual(header["base"], {"generated": s["base"]["generated"], "sha256": s["base"]["sha256"], "rows": 3})
@@ -157,6 +158,50 @@ class PublishTests(unittest.TestCase):
         self.assertEqual([r["n"] for r in w.lines(publish.DELTA)[1:]], ["gamma-demo"])
         self.assertEqual(w.names(), ["alpha-demo", "beta-demo", "delta-demo", "gamma-demo"])
         self.assertEqual(os.path.getmtime(os.path.join(w.site, publish.BASE)), publish.seconds_of("2026-10-04T04:17:00Z"))
+
+    def test_the_runtime_list_is_checked_signed_and_published_and_a_change_to_it_alone_publishes(self):
+        w = World(self)
+        w.export([A, B], [H])
+        with open(publish.RUNTIMES_SOURCE, "rb") as fh:
+            committed = fh.read()
+        self.assertEqual(w.run("2026-10-04T04:17:00Z")[0], 0)
+        self.assertEqual(w.read(publish.RUNTIMES), committed, "published byte for byte")
+        public = publish.read_public_key(w.public)[1]
+        self.assertTrue(publish.ed25519_verify(public, committed, base64.b64decode(w.read(publish.RUNTIMES + ".sig"))))
+        self.assertEqual(w.status()["runtimes"]["sha256"], publish.sha256_of(os.path.join(w.site, publish.RUNTIMES)))
+        # The packages did not change, the runtime list did: it is published (with an unchanged package list).
+        data = json.loads(committed)
+        data["generated"] = "2099-01-01T00:00:00Z"
+        data["releases"][0]["title"] = "Another release"
+        changed = os.path.join(w.dir, "runtimes.json")
+        with open(changed, "w") as fh:
+            json.dump(data, fh)
+        code, out = w.run("2026-10-04T05:17:00Z", "--runtimes", changed)
+        self.assertEqual(code, 0, out)
+        self.assertIn("the runtime list changed", out)
+        self.assertEqual(json.loads(w.read(publish.RUNTIMES))["releases"][0]["title"], "Another release")
+        self.assertEqual(w.names(), ["alpha-demo", "beta-demo", "delta-demo"])
+        # Older than what is published, or invalid: refused, nothing replaced.
+        before = w.read(publish.RUNTIMES)
+        data["generated"] = "2026-01-01T00:00:00Z"
+        data["releases"][0]["title"] = "Older"
+        with open(changed, "w") as fh:
+            json.dump(data, fh)
+        code, out = w.run("2026-10-04T06:17:00Z", "--runtimes", changed)
+        self.assertEqual(code, 1)
+        self.assertIn("not newer than the published", out)
+        data["generated"] = "2099-02-01T00:00:00Z"
+        data["incidents"][0]["summary"] = "You are safe."
+        with open(changed, "w") as fh:
+            json.dump(data, fh)
+        code, out = w.run("2026-10-04T06:17:00Z", "--runtimes", changed)
+        self.assertEqual(code, 1)
+        self.assertIn("banned word", out)
+        self.assertEqual(w.read(publish.RUNTIMES), before)
+        # A tampered runtime list fails verification.
+        with open(os.path.join(w.site, publish.RUNTIMES), "ab") as fh:
+            fh.write(b" ")
+        self.assertEqual(publish.main(["verify", "--site", w.site, "--public-key-file", w.public]), 1)
 
     def test_nothing_new_publishes_nothing_and_says_so(self):
         w = World(self)

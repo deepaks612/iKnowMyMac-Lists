@@ -1,0 +1,10 @@
+{
+  "id": "MAL-2026-0102",
+  "published": "2026-10-20",
+  "modified": "2026-10-20T12:00:00Z",
+  "summary": "Malicious code in io.Example:Typo-Squat (Maven)",
+  "affected": [
+    {"package": {"ecosystem": "Maven:https://repo1.maven.org/maven2/", "name": "io.Example:Typo-Squat"}, "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}]}]},
+    {"package": {"ecosystem": "npm", "name": "typo-squat"}, "versions": ["0.0.1"]}
+  ]
+}

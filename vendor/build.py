@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Package list v1 builder: turns the public OSV exports for npm and PyPI into the list the app reads.
+"""Package list v1 builder: turns the public OSV exports for npm, PyPI and (from app 1.7.1) Maven into the list the app
+reads.
 
 The contract is docs/api/package-list-v1.md ("Building rows from the public records" and "The same rules,
 spelled out"). The app's own fallback importer follows the same rules, and both are run against the vectors in
@@ -7,7 +8,7 @@ Tests/CoreTests/PackageWatch/Fixtures/list-vectors/.
 
 Usage:
   python3 -I scripts/package-list/build.py --npm <all.zip or folder of .json> --pypi <all.zip or folder of .json>
-          [--out <base.jsonl.gz>] [--base <earlier base.jsonl.gz> --delta-out <delta.jsonl.gz>]
+          [--maven <all.zip or folder of .json>] [--out <base.jsonl.gz>] [--base <earlier base.jsonl.gz> --delta-out <delta.jsonl.gz>]
           [--generated 2026-10-11T04:00:00Z] [--as-of 2026-10-04T04:00:00Z] [--stats <stats.json>]
   python3 -I scripts/package-list/build.py --check-vectors <list-vectors folder>
   python3 -I scripts/package-list/build.py --check-delta-vectors <delta-vectors folder>
@@ -379,10 +380,123 @@ def pep440_less(a, b):
     return len(la) < len(lb)
 
 
+# Maven (app 1.7.1): Maven's own ComparableVersion, as the app's PackageMavenVersion does it. The version splits at ".",
+# "-" and every change between digits and letters ("-" and a change open a nested list); numbers compare as numbers;
+# qualifiers alpha (a1), beta (b1), milestone (m1), rc (cr), snapshot, the release ("", ga, final, release), sp, then
+# any other; trailing zeros, release qualifiers and empty lists are dropped from the end of each list.
+MAVEN_QUALIFIERS = ["alpha", "beta", "milestone", "rc", "snapshot", "", "sp"]
+MAVEN_NOT_A_VERSION = set(" \t\n\r$[](),{}")
+
+
+def maven_alias(word, followed_by_digit):
+    if followed_by_digit and len(word) == 1:
+        word = {"a": "alpha", "b": "beta", "m": "milestone"}.get(word, word)
+    return {"ga": "", "final": "", "release": "", "cr": "rc"}.get(word, word)
+
+
+def maven_parse(raw):
+    """A version as nested lists of ("i", digits) and ("s", qualifier); None for what is not a version here."""
+    if not raw or len(raw.encode("utf-8")) > 128 or any(c in MAVEN_NOT_A_VERSION or c.isspace() for c in raw):
+        return None
+    text = raw.lower()
+    root = []
+    current = root
+    stack = [root]
+    is_digit = False
+    start = 0
+
+    def number(digits):
+        return ("i", digits.lstrip("0"))
+
+    def item(part, digit):
+        return number(part) if digit else ("s", maven_alias(part, False))
+
+    def nested():
+        nonlocal current
+        child = []
+        current.append(("l", child))
+        current = child
+        stack.append(child)
+
+    for i, c in enumerate(text):
+        if c == ".":
+            current.append(("i", "") if i == start else item(text[start:i], is_digit))
+            start = i + 1
+        elif c == "-":
+            current.append(("i", "") if i == start else item(text[start:i], is_digit))
+            start = i + 1
+            nested()
+        elif c.isascii() and c.isdigit():
+            if not is_digit and i > start:
+                current.append(("s", maven_alias(text[start:i], True)))
+                start = i
+                nested()
+            is_digit = True
+        else:
+            if is_digit and i > start:
+                current.append(number(text[start:i]))
+                start = i
+                nested()
+            is_digit = False
+    if len(text) > start:
+        current.append(item(text[start:], is_digit))
+    for node in reversed(stack):
+        i = len(node) - 1
+        while i >= 0:
+            kind, value = node[i]
+            if (kind == "i" and value == "") or (kind == "s" and value == "") or (kind == "l" and not value):
+                del node[i]
+            elif kind != "l":
+                break
+            i -= 1
+    return ("l", root)
+
+
+def maven_rank(word):
+    return str(MAVEN_QUALIFIERS.index(word)) if word in MAVEN_QUALIFIERS else "%d-%s" % (len(MAVEN_QUALIFIERS), word)
+
+
+def maven_compare(a, b):
+    """Maven's compareTo; None stands for a missing item."""
+    if a is None:
+        return 0 if b is None else -maven_compare(b, None)
+    ka, va = a
+    if b is None:
+        if ka == "i":
+            return 0 if va == "" else 1
+        if ka == "s":
+            return (maven_rank(va) > maven_rank("")) - (maven_rank(va) < maven_rank(""))
+        return maven_compare(va[0], None) if va else 0
+    kb, vb = b
+    if ka == "i":
+        if kb != "i":
+            return 1
+        return (len(va) > len(vb)) - (len(va) < len(vb)) if len(va) != len(vb) else (va > vb) - (va < vb)
+    if ka == "s":
+        if kb == "i":
+            return -1
+        if kb == "s":
+            return (maven_rank(va) > maven_rank(vb)) - (maven_rank(va) < maven_rank(vb))
+        return -1
+    if kb == "i":
+        return -1
+    if kb == "s":
+        return 1
+    for n in range(max(len(va), len(vb))):
+        r = maven_compare(va[n] if n < len(va) else None, vb[n] if n < len(vb) else None)
+        if r:
+            return r
+    return 0
+
+
+def maven_less(a, b):
+    return maven_compare(a, b) < 0
+
+
 def greatest_fixed(eco, fixes):
     """The greatest version by the ecosystem's ordering. Versions that cannot be parsed sort lowest; plain string
     order settles what is left (two unparseable versions, or two spellings of the same version)."""
-    parse, less = (pep440_parse, pep440_less) if eco == "pypi" else (semver_parse, semver_less)
+    parse, less = {"pypi": (pep440_parse, pep440_less), "maven": (maven_parse, maven_less)}.get(eco, (semver_parse, semver_less))
     parsed = {v: parse(v) for v in fixes}
 
     def compare(x, y):
@@ -492,6 +606,8 @@ def parse_record(raw, as_of=None):
             key = ("npm", name)
         elif base == "pypi":
             key = ("pypi", pep503(name))
+        elif base == "maven":
+            key = ("maven", name)   # group:artifact, as published
         else:
             continue
         # Entries of one record that name the same package are one entry.
@@ -743,6 +859,10 @@ def base_info(path):
     return {"generated": header["generated"], "sha256": hashlib.sha256(packed).hexdigest(), "rows": len(rows)}, rows
 
 
+ECOSYSTEMS = ("npm", "pypi", "maven")
+LABELS_SEEN = ECOSYSTEMS
+
+
 def stats_of(rows, st, generated, current_to, plain, packed, seconds):
     def per(prefix, labels):
         return {label: st[prefix + label] for label in labels}
@@ -757,7 +877,7 @@ def stats_of(rows, st, generated, current_to, plain, packed, seconds):
         "generated": generated,
         "currentTo": current_to,
         "records_by_export": {label: {k: st["records_%s_%s" % (k, label)] for k in record_keys}
-                              for label in ("npm", "pypi")},
+                              for label in LABELS_SEEN},
         "rows": {
             "total": len(rows),
             "by_e": dict(sorted(by_e.items())),
@@ -772,11 +892,11 @@ def stats_of(rows, st, generated, current_to, plain, packed, seconds):
             "matching_nothing": st["rows_matching_nothing"],
         },
         "groups": {
-            "merged_more_than_one_record": per("groups_merged_", ("npm", "pypi")),
-            "vuln_left_out": per("vuln_groups_left_out_", ("npm", "pypi")),
-            "vuln_medium_with_fix": per("vuln_groups_medium_with_fix_", ("npm", "pypi")),
-            "vuln_no_usable_severity": per("vuln_groups_no_severity_", ("npm", "pypi")),
-            "vuln_no_usable_severity_with_fix": per("vuln_groups_no_severity_with_fix_", ("npm", "pypi")),
+            "merged_more_than_one_record": per("groups_merged_", ECOSYSTEMS),
+            "vuln_left_out": per("vuln_groups_left_out_", ECOSYSTEMS),
+            "vuln_medium_with_fix": per("vuln_groups_medium_with_fix_", ECOSYSTEMS),
+            "vuln_no_usable_severity": per("vuln_groups_no_severity_", ECOSYSTEMS),
+            "vuln_no_usable_severity_with_fix": per("vuln_groups_no_severity_with_fix_", ECOSYSTEMS),
         },
         "output": {"compressed_bytes": len(packed), "uncompressed_bytes": len(plain),
                    "sha256": hashlib.sha256(packed).hexdigest()},
@@ -864,6 +984,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build the package list (docs/api/package-list-v1.md).")
     ap.add_argument("--npm", help="OSV npm export: all.zip or a folder of .json records")
     ap.add_argument("--pypi", help="OSV PyPI export: all.zip or a folder of .json records")
+    ap.add_argument("--maven", help="OSV Maven export: all.zip or a folder of .json records (app 1.7.1; optional)")
     ap.add_argument("--out", help="the whole list (a base) to write (.jsonl.gz)")
     ap.add_argument("--base", help="an earlier base (.jsonl.gz) to write a delta against")
     ap.add_argument("--delta-out", help="the delta against --base to write (.jsonl.gz)")
@@ -892,14 +1013,15 @@ def main():
         ap.error("--as-of must look like 2026-10-04T04:00:00Z")
 
     started = time.monotonic()
-    rows, current_to, st = build([("npm", args.npm), ("pypi", args.pypi)], as_of=args.as_of)
+    sources = [("npm", args.npm), ("pypi", args.pypi)] + ([("maven", args.maven)] if args.maven else [])
+    rows, current_to, st = build(sources, as_of=args.as_of)
     plain, packed = encode_list(rows, generated, current_to)
     if args.out:
         write_atomically(args.out, packed)
     stats = stats_of(rows, st, generated, current_to, plain, packed, time.monotonic() - started)
     if args.as_of:
         stats["asOf"] = args.as_of
-        stats["records_after_as_of"] = {label: st["records_after_as_of_" + label] for label in ("npm", "pypi")}
+        stats["records_after_as_of"] = {label: st["records_after_as_of_" + label] for label, _ in sources}
     if args.delta_out:
         base, base_rows = base_info(args.base)
         if generated < base["generated"]:

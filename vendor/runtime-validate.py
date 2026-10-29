@@ -13,7 +13,9 @@ import sys
 
 MAX_BYTES = 512 * 1024
 LIMITS = {"lines": 64, "releases": 256, "roots": 64, "fixedPackages": 64, "incidents": 64}
-RUNTIMES = {"node": 1, "php": 2, "go": 2}
+RUNTIMES = {"node": 1, "php": 2, "go": 2, "java": 1}
+# App 1.7.1: Java vendors a release may name in `vendors` (JavaVendor in the app).
+JAVA_VENDORS = {"oracle", "temurin", "zulu", "corretto", "microsoft", "liberica", "jetbrains", "homebrew", "graalvm", "openjdk"}
 SEVERITIES = {"critical", "high", "medium", "low"}
 BANNED = re.compile(r"\b(safe|secure|security guaranteed|protected)\b", re.I)
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -21,6 +23,18 @@ DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 VERSION = re.compile(r"^\d+(\.\d+)*$")
 HOMEBREW = re.compile(r"^(\d{4}-\d{2}-\d{2}|\d+(\.\d+)*)(_\d+)?$")
+JAVA8 = re.compile(r"^1\.(\d)\.0_(\d+)$")
+
+
+def on_line(runtime, version, line):
+    """Whether a fixed version is on its line. Java writes 8 and older as `java -version` prints them (1.8.0_511)."""
+    if not isinstance(version, str):
+        return False
+    if runtime == "java":
+        old = JAVA8.match(version)
+        if old:
+            return old.group(1) == line
+    return bool(VERSION.match(version)) and version.startswith(line + ".")
 
 
 def problems_in(data, raw_size, previous=None):
@@ -49,7 +63,9 @@ def problems_in(data, raw_size, previous=None):
             need(not BANNED.search(value), "%s uses a banned word (safe/secure/protected): %r" % (where, value))
 
     ids = {}
-    for key in ("runtimes", "releases", "roots", "fixedPackages", "incidents"):
+    # App 1.7.1: `incidents2` holds cards 1.5.1–1.7.0 must not see (one about Java would read "nothing affected" there);
+    # it is checked like `incidents`, and the limit is for the two together.
+    for key in ("runtimes", "releases", "roots", "fixedPackages", "incidents", "incidents2"):
         rows = data.get(key, [])
         if not need(isinstance(rows, list), "%s must be a list" % key):
             data[key] = rows = []
@@ -61,6 +77,9 @@ def problems_in(data, raw_size, previous=None):
             need(rid not in seen, "%s: id %r twice" % (key, rid))
             seen.add(rid)
         ids[key] = seen
+    need(len(data["incidents"]) + len(data["incidents2"]) <= LIMITS["incidents"], "incidents and incidents2 have more than %d rows" % LIMITS["incidents"])
+    need(not (ids["incidents"] & ids["incidents2"]), "an incident id is in both incidents and incidents2")
+    ids["incidents"] = ids["incidents"] | ids["incidents2"]
 
     lines = {}
     for row in data["runtimes"]:
@@ -73,6 +92,8 @@ def problems_in(data, raw_size, previous=None):
             need(isinstance(line.get("line"), str) and VERSION.match(line["line"]) and line["line"].count(".") + 1 == row.get("lineDepth"),
                  "%s: line %r does not have lineDepth numbers" % (where, line.get("line")))
             need(line.get("status") in ("supported", "endOfLife"), "%s: line %s status must be supported or endOfLife" % (where, line.get("line")))
+            if "lts" in line:
+                need(isinstance(line["lts"], bool), "%s: line %s lts must be true or false" % (where, line.get("line")))
             if "since" in line:
                 need(isinstance(line["since"], str) and DAY.match(line["since"]), "%s: line %s since must be YYYY-MM-DD" % (where, line.get("line")))
             names.append(line.get("line"))
@@ -92,8 +113,17 @@ def problems_in(data, raw_size, previous=None):
         if need(isinstance(fixed, dict) and fixed, "%s: fixed must name at least one line" % where):
             for line, version in fixed.items():
                 need(lines.get(runtime, {}).get(line) == "supported", "%s: fixed names line %s, which is not a supported line" % (where, line))
-                need(isinstance(version, str) and VERSION.match(version) and version.startswith(line + "."),
-                     "%s: fixed version %r is not on line %s" % (where, version, line))
+                need(on_line(runtime, version, line), "%s: fixed version %r is not on line %s" % (where, version, line))
+        vendors = row.get("vendors", {})
+        if need(isinstance(vendors, dict), "%s: vendors must be an object" % where):
+            for vendor, by_line in vendors.items():
+                need(runtime == "java" and vendor in JAVA_VENDORS, "%s: vendors names %r, not a Java vendor the app knows" % (where, vendor))
+                if not need(isinstance(by_line, dict), "%s: vendors.%s must be an object" % (where, vendor)):
+                    continue
+                for line, version in by_line.items():
+                    need(isinstance(fixed, dict) and line in fixed, "%s: vendors.%s names line %s, which fixed does not" % (where, vendor, line))
+                    need(version is None or on_line(runtime, version, line),
+                         "%s: vendors.%s.%s must be a version on that line, or null (not published yet)" % (where, vendor, line))
         cves = row.get("cves", [])
         need(isinstance(cves, list) and len(cves) <= 6 and all(re.match(r"^CVE-\d{4}-\d{4,}$", c) for c in cves),
              "%s: cves must be at most 6 CVE ids" % where)
@@ -122,7 +152,7 @@ def problems_in(data, raw_size, previous=None):
             need(row["incident"] in ids["incidents"], "%s: incident %r is not in incidents" % (where, row["incident"]))
         source(row, where)
 
-    for row in data["incidents"]:
+    for row in data["incidents"] + data["incidents2"]:
         where = "incidents[%s]" % row.get("id")
         text(row.get("title"), where + ".title")
         text(row.get("summary"), where + ".summary")
@@ -137,8 +167,14 @@ def problems_in(data, raw_size, previous=None):
                 for ref in covers.get(key, []):
                     need(ref in ids[pool], "%s: covers.%s names %r, which is not in %s" % (where, key, ref, pool))
             for adv in covers.get("packageAdvisories", []):
-                need(isinstance(adv, dict) and adv.get("e") in ("npm", "pypi") and adv.get("n") and adv.get("id"),
-                     "%s: a packageAdvisory needs e (npm/pypi), n and id" % where)
+                need(isinstance(adv, dict) and adv.get("e") in ("npm", "pypi", "maven") and adv.get("n") and adv.get("id"),
+                     "%s: a packageAdvisory needs e (npm/pypi/maven), n and id" % where)
+        # A card about a runtime 1.5.1–1.7.0 do not look for belongs in incidents2.
+        if row in data["incidents"]:
+            for ref in (covers or {}).get("releases", []) if isinstance(covers, dict) else []:
+                release = next((r for r in data["releases"] if r.get("id") == ref), {})
+                need(release.get("runtime") in ("node", "php", "go"),
+                     "%s: covers a %s release; cards about runtimes added after 1.5.1 go in incidents2" % (where, release.get("runtime")))
         if "learnMore" in row:
             need(isinstance(row["learnMore"], str) and row["learnMore"].startswith("https://iknowmymac.com/"),
                  "%s: learnMore must be a page on iknowmymac.com" % where)
@@ -165,7 +201,8 @@ def main(argv):
     for line in problems:
         print("%s: %s" % (path, line))
     if not problems:
-        print("%s: valid (%d releases, %d roots, %d incidents)" % (path, len(data["releases"]), len(data["roots"]), len(data["incidents"])))
+        print("%s: valid (%d releases, %d roots, %d incidents)" % (path, len(data["releases"]), len(data["roots"]),
+                                                                  len(data["incidents"]) + len(data["incidents2"])))
     return 1 if problems else 0
 
 

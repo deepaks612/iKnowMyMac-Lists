@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-10-21T19:30:00Z",
+ "generated": "2026-10-29T12:00:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -91,6 +91,99 @@
     }
    ],
    "source": "https://go.dev/doc/devel/release"
+  },
+  {
+   "id": "java",
+   "name": "Java",
+   "lineDepth": 1,
+   "lines": [
+    {
+     "line": "27",
+     "status": "supported"
+    },
+    {
+     "line": "26",
+     "status": "endOfLife"
+    },
+    {
+     "line": "25",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "24",
+     "status": "endOfLife"
+    },
+    {
+     "line": "23",
+     "status": "endOfLife"
+    },
+    {
+     "line": "22",
+     "status": "endOfLife"
+    },
+    {
+     "line": "21",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "20",
+     "status": "endOfLife"
+    },
+    {
+     "line": "19",
+     "status": "endOfLife"
+    },
+    {
+     "line": "18",
+     "status": "endOfLife"
+    },
+    {
+     "line": "17",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "16",
+     "status": "endOfLife"
+    },
+    {
+     "line": "15",
+     "status": "endOfLife"
+    },
+    {
+     "line": "14",
+     "status": "endOfLife"
+    },
+    {
+     "line": "13",
+     "status": "endOfLife"
+    },
+    {
+     "line": "12",
+     "status": "endOfLife"
+    },
+    {
+     "line": "11",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "10",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8",
+     "status": "supported",
+     "lts": true
+    }
+   ],
+   "source": "https://www.oracle.com/java/technologies/java-se-support-roadmap.html"
   }
  ],
  "releases": [
@@ -143,6 +236,120 @@
    },
    "cves": [],
    "source": "https://go.dev/doc/devel/release"
+  },
+  {
+   "id": "java-2026-10-20",
+   "runtime": "java",
+   "date": "2026-10-20",
+   "severity": "high",
+   "title": "Oracle Java October 2026 Critical Patch Update",
+   "fixed": {
+    "27": "27.0.1",
+    "25": "25.0.5",
+    "21": "21.0.13",
+    "17": "17.0.21",
+    "11": "11.0.33",
+    "8": "1.8.0_511"
+   },
+   "cves": [
+    "CVE-2026-91484",
+    "CVE-2026-43660",
+    "CVE-2026-91415",
+    "CVE-2026-91398",
+    "CVE-2026-91382",
+    "CVE-2026-91411"
+   ],
+   "source": "https://www.oracle.com/security-alerts/cpuoct2026.html",
+   "vendors": {
+    "temurin": {
+     "11": null,
+     "8": null
+    },
+    "zulu": {
+     "8": "1.8.0_512"
+    },
+    "corretto": {
+     "8": "1.8.0_512"
+    },
+    "liberica": {
+     "8": "1.8.0_512"
+    },
+    "openjdk": {
+     "11": null,
+     "8": null
+    },
+    "microsoft": {
+     "11": null
+    },
+    "homebrew": {
+     "11": null,
+     "8": null
+    },
+    "jetbrains": {
+     "25": null,
+     "21": null,
+     "17": null
+    }
+   }
+  },
+  {
+   "id": "java-2026-10-24",
+   "runtime": "java",
+   "date": "2026-10-24",
+   "severity": "critical",
+   "title": "Java stops trusting the eMudhra certificates",
+   "fixed": {
+    "27": "27.0.1.0.3",
+    "25": "25.0.5.0.3",
+    "21": "21.0.13.0.3",
+    "17": "17.0.21.0.3",
+    "11": "11.0.33.0.3"
+   },
+   "cves": [
+    "CVE-2026-91403",
+    "CVE-2026-114820"
+   ],
+   "source": "https://www.oracle.com/security-alerts/alert-cve-2026-114820.html",
+   "vendors": {
+    "temurin": {
+     "27": "27.0.1.0.2",
+     "25": "25.0.5",
+     "21": "21.0.13",
+     "17": "17.0.21",
+     "11": null
+    },
+    "corretto": {
+     "27": "27.0.1",
+     "25": "25.0.5",
+     "21": "21.0.13",
+     "17": "17.0.21",
+     "11": "11.0.33"
+    },
+    "zulu": {
+     "27": "27.0.1",
+     "25": "25.0.5",
+     "21": "21.0.13",
+     "17": "17.0.21",
+     "11": "11.0.33"
+    },
+    "microsoft": {
+     "25": "25.0.5",
+     "21": "21.0.13",
+     "17": "17.0.21",
+     "11": null
+    },
+    "homebrew": {
+     "11": null
+    },
+    "openjdk": {
+     "11": null
+    },
+    "jetbrains": {
+     "25": null,
+     "21": null,
+     "17": null
+    }
+   }
   }
  ],
  "roots": [
@@ -244,6 +451,23 @@
    },
    "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
    "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
+  }
+ ],
+ "incidents2": [
+  {
+   "id": "java-2026-10",
+   "title": "Java October security update",
+   "date": "2026-10-20",
+   "severity": "critical",
+   "summary": "Oracle's October update has 55 Java fixes, 49 of them reachable over a network without a login. Two fixes that followed on 21 and 24 October (both 9.1) make Java stop trusting the eMudhra certificates, so builds from 20 October still need an update.",
+   "notAffected": "Java 26 got no October update: it is at end of life, so move to Java 27 or the long-term Java 25.",
+   "covers": {
+    "releases": [
+     "java-2026-10-20",
+     "java-2026-10-24"
+    ]
+   },
+   "source": "https://www.oracle.com/security-alerts/cpuoct2026.html"
   }
  ]
 }

@@ -1,0 +1,2 @@
+{"e":"maven","n":"io.Example:Typo-Squat","k":"mal","id":"MAL-2026-0102","all":true,"p":"2026-10-20T00:00:00Z","m":"2026-10-20T12:00:00Z","t":"Malicious code in io.Example:Typo-Squat (Maven)"}
+{"e":"npm","n":"typo-squat","k":"mal","id":"MAL-2026-0102","v":["0.0.1"],"all":false,"p":"2026-10-20T00:00:00Z","m":"2026-10-20T12:00:00Z","t":"Malicious code in io.Example:Typo-Squat (Maven)"}

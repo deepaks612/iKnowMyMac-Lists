@@ -56,6 +56,8 @@ PUBLIC_KEY_FILE = os.path.join(ROOT, "keys", "package-list-public-key.txt")
 SOURCES = [
     ("npm", "https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip"),
     ("pypi", "https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip"),
+    # App 1.7.1: Maven (and Gradle, which uses the same coordinates). Apps before 1.7.1 skip these rows.
+    ("maven", "https://osv-vulnerabilities.storage.googleapis.com/Maven/all.zip"),
 ]
 
 LICENCE_LINE = ("Built from OpenSSF Malicious Packages (Apache-2.0), the GitHub Advisory Database (CC-BY-4.0) and the "
@@ -425,7 +427,7 @@ class Previous:
 # run
 
 def obtain_sources(work, previous, need_bytes, as_of):
-    """The two exports, with conditional requests. Returns ({label: path or None}, {label: source record}, changed)."""
+    """The exports (npm, PyPI, Maven), with conditional requests. Returns ({label: path or None}, {label: source record}, changed)."""
     os.makedirs(work, exist_ok=True)
     known = {s["name"]: s for s in (previous.status or {}).get("sources", [])} if previous.status else {}
     paths, records, changed = {}, {}, False
@@ -458,7 +460,7 @@ def obtain_sources(work, previous, need_bytes, as_of):
                           "lastModified": current.get("lastModified"), "bytes": current.get("bytes")}
     if need_bytes or changed:
         for label, url in SOURCES:
-            if paths[label] is None:        # unchanged since the last publication, but both are needed to build
+            if paths[label] is None:        # unchanged since the last publication, but all are needed to build
                 dest = os.path.join(work, "%s-all.zip" % label)
                 status, new_etag, modified, size = fetch(url, dest)
                 if status != 200:

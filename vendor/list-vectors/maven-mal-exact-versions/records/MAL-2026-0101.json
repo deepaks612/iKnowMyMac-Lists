@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.6.0",
+  "id": "MAL-2026-0101",
+  "published": "2026-10-20T09:00:00Z",
+  "modified": "2026-10-21T08:15:00Z",
+  "summary": "Malicious code in org.example.demo:log-helper (Maven)",
+  "details": "Invented record for a test.",
+  "affected": [
+    {"package": {"ecosystem": "Maven", "name": "org.example.demo:log-helper"}, "versions": ["1.2.10", "1.2.9", "1.2.9.1"]}
+  ]
+}

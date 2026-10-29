@@ -1,0 +1,11 @@
+{
+  "id": "GHSA-mmmm-nnnn-pppp",
+  "published": "2026-10-20T09:00:00Z",
+  "modified": "2026-10-22T10:00:00Z",
+  "summary": "org.example.demo:xml-reader lets a document run code",
+  "database_specific": {"severity": "CRITICAL"},
+  "affected": [
+    {"package": {"ecosystem": "Maven", "name": "org.example.demo:xml-reader"},
+     "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1.10.0"}, {"introduced": "2.0.0.Beta1"}, {"fixed": "2.0.0.Final"}, {"introduced": "2.0.0.0"}, {"fixed": "2.0.0.1"}]}]}
+  ]
+}

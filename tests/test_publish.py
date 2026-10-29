@@ -61,8 +61,8 @@ class World:
             fh.write("# test key\n" + base64.b64encode(der[-32:]).decode() + "\n")
         return public
 
-    def export(self, npm, pypi):
-        for label, records in (("npm", npm), ("pypi", pypi)):
+    def export(self, npm, pypi, maven=()):
+        for label, records in (("npm", npm), ("pypi", pypi), ("maven", maven)):
             with zipfile.ZipFile(os.path.join(self.sources, label + "-all.zip"), "w", zipfile.ZIP_DEFLATED) as z:
                 for record in records:
                     z.writestr(record["id"] + ".json", json.dumps(record))
@@ -133,6 +133,20 @@ class PublishTests(unittest.TestCase):
             self.assertTrue(publish.verify_both(w.openssl, public, os.path.join(w.site, name), signature))
             self.assertFalse(publish.ed25519_verify(public, w.read(name) + b"x", signature))
         self.assertEqual(publish.main(["verify", "--site", w.site, "--public-key-file", w.public]), 0)
+
+    def test_maven_rows_are_built_from_the_maven_export_beside_npm_and_pypi(self):
+        # App 1.7.1: the third export. Its rows are skipped by apps before 1.7.1 (unknown ecosystem), read by 1.7.1.
+        w = World(self)
+        evil = {"id": "MAL-2026-0901", "modified": "2026-10-20T00:00:00Z", "published": "2026-10-20T00:00:00Z",
+                "summary": "Malicious code in org.example.demo:log-helper (Maven)",
+                "affected": [{"package": {"ecosystem": "Maven", "name": "org.example.demo:log-helper"}, "versions": ["1.2.9"]}]}
+        w.export([A, B], [H], [evil])
+        code, out = w.run("2026-10-04T04:17:00Z")
+        self.assertEqual(code, 0, out)
+        rows = w.lines(publish.BASE)[1:]
+        self.assertEqual([(r["e"], r["n"], r["v"]) for r in rows if r["e"] == "maven"], [("maven", "org.example.demo:log-helper", ["1.2.9"])])
+        self.assertEqual(w.status()["rows"], 4)
+        self.assertEqual(w.lines(publish.BASE)[0]["format"], 1)
 
     def test_an_hourly_change_writes_only_a_delta_and_the_base_is_carried_byte_for_byte(self):
         w = World(self)
@@ -390,7 +404,8 @@ class PublishTests(unittest.TestCase):
         self.assertIn("iKnowMyMac-Lists/1", publish.user_agent())
         self.assertIn("+https://", publish.user_agent())
         self.assertEqual([url for _, url in publish.SOURCES], ["https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip",
-                                                              "https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip"])
+                                                              "https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip",
+                                                              "https://osv-vulnerabilities.storage.googleapis.com/Maven/all.zip"])
 
     def test_the_vendored_builder_is_the_one_the_manifest_lists(self):
         done = subprocess.run([os.path.join(ROOT, "scripts", "check-vendor.sh")], capture_output=True, text=True)

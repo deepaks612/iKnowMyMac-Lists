@@ -3,8 +3,9 @@ iKnowMyMac package list: sources, licences and notices
 
 The files published by this repository (`packages-v1.jsonl.gz`, `packages-v1.delta.jsonl.gz` and their
 signatures) are a list of npm and PyPI package versions that public sources report as malicious, or as carrying a
-critical or high vulnerability that has a fixed version. The list is built by machine, with no hand editing, from
-the public records below, as exported by OSV.dev (https://osv.dev, https://google.github.io/osv.dev/data/).
+critical or high vulnerability that has a fixed version. The list is built by machine from the public records below,
+as exported by OSV.dev (https://osv.dev, https://google.github.io/osv.dev/data/), plus a few records checked by hand
+(source 4).
 
 Sources
 -------
@@ -23,6 +24,12 @@ Sources
    https://github.com/pypa/advisory-database
    Copyright the Python Packaging Authority and contributors. Licensed under Creative Commons Attribution 4.0
    International (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
+
+4. Hand-checked records (supplement/ in this repository)
+   Advisories a project published on its own page that the sources above did not carry yet, written as OSV
+   records from that advisory, which each record names. Today: React, GHSA-xqc2-xf4c-x3h3
+   (https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3). When a source above carries the same
+   advisory, its record is used instead.
 
 What was changed
 ----------------

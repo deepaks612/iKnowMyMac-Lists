@@ -26,6 +26,20 @@ To change it: edit `runtimes/runtimes-v1.json`, raise `generated`, run
 workflow") checks, signs and publishes it as `runtimes-v1.json` + `.sig`, even when the package list has not changed.
 A file that is invalid, uses a banned word, or is not newer than the published one is refused and nothing changes.
 
+## Hand-checked records (`supplement/`)
+Some advisories never reach the public exports: a project publishes it on its own GitHub page, and it is not
+reviewed into the GitHub Advisory Database, so OSV does not carry it. React's GHSA-xqc2-xf4c-x3h3 (October 2026) is
+one. `supplement/` holds such advisories as OSV-format records, one `<id>.json` each, written from the project's own
+advisory (`database_specific.source`). They are built by the same rules as the exports.
+
+- When an export later carries the same id, the export's record is newer and replaces ours, so a hand-checked record
+  never hides the public one. Delete ours once that has happened.
+- A record that would give no row (a severity under high, no fixed version, an ecosystem the list does not cover)
+  or names no https source is refused, and nothing is published.
+- A change here publishes on the next run, like a change to the runtime list. `status.json` names the records in use.
+- Write ranges, not exact versions: the app checks exact versions first and would then offer the newest fix instead
+  of the one on the copy's own line.
+
 ## What is in here
 - `scripts/publish.py`: the one script. Downloads the two exports with conditional requests, builds a base or a
   delta, signs, verifies, and lays out the folder to publish. The workflow calls it; it runs the same way on a Mac.

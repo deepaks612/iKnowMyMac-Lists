@@ -52,6 +52,10 @@ STATUS = "status.json"
 RUNTIMES = "runtimes-v1.json"
 RUNTIMES_SOURCE = os.path.join(ROOT, "runtimes", RUNTIMES)
 PUBLIC_KEY_FILE = os.path.join(ROOT, "keys", "package-list-public-key.txt")
+# Hand-checked advisory records the public exports do not carry yet (a project's own advisory that never reached the
+# GitHub Advisory Database, so not OSV either). OSV-format .json files, built by the same rules as the exports. When
+# an export carries the same id, the export's newer `modified` wins, so a record here never hides the public one.
+SUPPLEMENT = os.path.join(ROOT, "supplement")
 
 SOURCES = [
     ("npm", "https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip"),
@@ -63,7 +67,8 @@ SOURCES = [
 LICENCE_LINE = ("Built from OpenSSF Malicious Packages (Apache-2.0), the GitHub Advisory Database (CC-BY-4.0) and the "
                 "PyPI Advisory Database (CC-BY-4.0), as exported by OSV.dev. Changed: reduced to one row per advisory "
                 "and package, malicious releases and critical or high vulnerabilities with a fix only. This list is "
-                "offered under CC-BY-4.0; see NOTICE.txt.")
+                "offered under CC-BY-4.0; see NOTICE.txt. A few rows come from records "
+                "checked by hand against a project's own published advisory (supplement/ in this repository).")
 
 
 def setting(name, default, kind=float):
@@ -362,6 +367,34 @@ def load_runtimes(path, old):
                  "generated": data["generated"]}
 
 
+def load_supplement(build, folder):
+    """The hand-checked records: (folder or None, status record). Refused when a file is not a record the builder turns
+    into at least one row (a typo must not quietly drop an advisory), or names no https source."""
+    names = sorted(fn for fn in os.listdir(folder) if fn.endswith(".json")) if folder and os.path.isdir(folder) else []
+    digest = hashlib.sha256()
+    ids = []
+    for fn in names:
+        with open(os.path.join(folder, fn), "rb") as fh:
+            raw = fh.read()
+        digest.update(fn.encode("utf-8") + b"\0" + hashlib.sha256(raw).digest())
+        try:
+            record = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as error:
+            raise Refused("supplement/%s is not UTF-8 JSON: %s" % (fn, error))
+        if not isinstance(record, dict) or fn != "%s.json" % record.get("id"):
+            raise Refused("supplement/%s must be one record named after its id" % fn)
+        source = (record.get("database_specific") or {}).get("source")
+        if not (isinstance(source, str) and source.startswith("https://")):
+            raise Refused("supplement/%s: database_specific.source must be the https address of the advisory" % fn)
+        ids.append(record["id"])
+    if names:
+        rows, _, _ = build.build([("supplement", folder)])
+        missing = sorted(set(ids) - {row["id"] for row in rows})
+        if missing:
+            raise Refused("supplement records that give no row (severity, fix or ecosystem): %s" % ", ".join(missing))
+    return (folder if names else None), {"sha256": digest.hexdigest(), "records": len(names), "ids": ids}
+
+
 def load_builder():
     path = os.path.join(ROOT, "vendor", "build.py")
     spec = importlib.util.spec_from_file_location("package_list_build", path)
@@ -515,6 +548,8 @@ def run(args):
     force_base = args.force_base or rules_changed or key_changed or not old
     runtimes_raw, runtimes_record = load_runtimes(args.runtimes or RUNTIMES_SOURCE, old)
     runtimes_changed = bool(old) and (old.get("runtimes") or {}).get("sha256") != runtimes_record["sha256"]
+    supplement_path, supplement_record = load_supplement(build, SUPPLEMENT if args.supplement is None else args.supplement)
+    supplement_changed = bool(old) and (old.get("supplement") or {"sha256": hashlib.sha256().hexdigest()})["sha256"] != supplement_record["sha256"]
     if args.source_dir:
         paths = {label: os.path.join(args.source_dir, "%s-all.zip" % label) for label, _ in SOURCES}
         records = {label: {"name": label, "url": url, "etag": '"%s"' % sha256_of(paths[label])[:32], "lastModified": None,
@@ -522,10 +557,10 @@ def run(args):
         known = {s["name"]: s.get("etag") for s in old.get("sources", [])} if old else {}
         changed = any(records[label]["etag"] != known.get(label) for label, _ in SOURCES)
     else:
-        paths, records, changed = obtain_sources(work, previous, force_base or runtimes_changed, args.as_of)
+        paths, records, changed = obtain_sources(work, previous, force_base or runtimes_changed or supplement_changed, args.as_of)
 
     changed_at = generated if changed or not old else old.get("sourcesChangedAt", old["generated"])
-    if not changed and not force_base and not runtimes_changed:
+    if not changed and not force_base and not runtimes_changed and not supplement_changed:
         idle = now - seconds_of(changed_at)
         if idle > stale_after:
             raise Refused("neither public export has changed for %.0f hours (they usually change most hours): the "
@@ -535,7 +570,8 @@ def run(args):
         return {"publish": False, "kind": "none"}
 
     # Build today's list.
-    rows, current_to, st = build.build([(label, paths[label]) for label, _ in SOURCES], as_of=args.as_of)
+    sources = [(label, paths[label]) for label, _ in SOURCES] + ([("supplement", supplement_path)] if supplement_path else [])
+    rows, current_to, st = build.build(sources, as_of=args.as_of)
     plain, packed = build.encode_list(rows, generated, current_to)
     rows = build.rows_as_written(plain)
     for label, _ in SOURCES:
@@ -607,6 +643,8 @@ def run(args):
     write_signature(delta_path + ".sig", sign(openssl, private_pem, delta_path))
     write_bytes(os.path.join(staging, RUNTIMES), runtimes_raw)
     write_signature(os.path.join(staging, RUNTIMES + ".sig"), sign(openssl, private_pem, os.path.join(staging, RUNTIMES)))
+    if supplement_changed:
+        log("the hand-checked records changed: %s" % (", ".join(supplement_record["ids"]) or "none left"))
     if runtimes_changed:
         log("the runtime list changed: %s (%d bytes)" % (runtimes_record["generated"], runtimes_record["bytes"]))
     del private_pem
@@ -622,6 +660,7 @@ def run(args):
         "delta": {"file": DELTA, "sha256": sha256_of(delta_path), "bytes": os.path.getsize(delta_path),
                   "changed": len(delta_rows) - gone, "gone": gone},
         "runtimes": runtimes_record,
+        "supplement": supplement_record,
         "publicKey": public_text,
         "builder": {"sha256": builder_sha},
         "sources": [records[label] for label, _ in SOURCES],
@@ -774,6 +813,7 @@ def main(argv=None):
     r.add_argument("--source-dir", help="use npm-all.zip and pypi-all.zip from this folder instead of downloading (tests)")
     r.add_argument("--now", help="the build time, YYYY-MM-DDTHH:MM:SSZ (tests)")
     r.add_argument("--runtimes", help="the runtime list to publish (default: runtimes/runtimes-v1.json)")
+    r.add_argument("--supplement", help="the folder of hand-checked records (default: supplement/)")
     r.add_argument("--as-of", help="build the list as it stood at this time (trial runs and measuring only)")
     v = sub.add_parser("verify", help="check a publication against the committed public key")
     v.add_argument("--site", required=True, help="a folder, or the site's https URL")

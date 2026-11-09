@@ -1,0 +1,134 @@
+{
+ "schema_version": "1.6.0",
+ "id": "GHSA-xqc2-xf4c-x3h3",
+ "modified": "2026-10-14T17:08:26Z",
+ "published": "2026-10-14T17:08:26Z",
+ "aliases": [],
+ "summary": "Unauthenticated Remote Code Execution in React Server Components",
+ "details": "Crafted payloads targeting frameworks supporting React Server Components can lead to remote code execution. Affected: 19.0.0 through 19.0.8, 19.1.0 through 19.1.9, 19.2.0 through 19.2.8 and 19.3.0. Fixed in 19.0.9, 19.1.10, 19.2.9 and 19.3.1. Published by the React team as a repository advisory only; it was not in the GitHub Advisory Database or OSV when this record was written (2026-11-09).",
+ "affected": [
+  {
+   "package": {
+    "ecosystem": "npm",
+    "name": "react-server-dom-parcel"
+   },
+   "ranges": [
+    {
+     "type": "SEMVER",
+     "events": [
+      {
+       "introduced": "19.0.0"
+      },
+      {
+       "fixed": "19.0.9"
+      },
+      {
+       "introduced": "19.1.0"
+      },
+      {
+       "fixed": "19.1.10"
+      },
+      {
+       "introduced": "19.2.0"
+      },
+      {
+       "fixed": "19.2.9"
+      },
+      {
+       "introduced": "19.3.0"
+      },
+      {
+       "fixed": "19.3.1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "package": {
+    "ecosystem": "npm",
+    "name": "react-server-dom-turbopack"
+   },
+   "ranges": [
+    {
+     "type": "SEMVER",
+     "events": [
+      {
+       "introduced": "19.0.0"
+      },
+      {
+       "fixed": "19.0.9"
+      },
+      {
+       "introduced": "19.1.0"
+      },
+      {
+       "fixed": "19.1.10"
+      },
+      {
+       "introduced": "19.2.0"
+      },
+      {
+       "fixed": "19.2.9"
+      },
+      {
+       "introduced": "19.3.0"
+      },
+      {
+       "fixed": "19.3.1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "package": {
+    "ecosystem": "npm",
+    "name": "react-server-dom-webpack"
+   },
+   "ranges": [
+    {
+     "type": "SEMVER",
+     "events": [
+      {
+       "introduced": "19.0.0"
+      },
+      {
+       "fixed": "19.0.9"
+      },
+      {
+       "introduced": "19.1.0"
+      },
+      {
+       "fixed": "19.1.10"
+      },
+      {
+       "introduced": "19.2.0"
+      },
+      {
+       "fixed": "19.2.9"
+      },
+      {
+       "introduced": "19.3.0"
+      },
+      {
+       "fixed": "19.3.1"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "ADVISORY",
+   "url": "https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3"
+  }
+ ],
+ "database_specific": {
+  "severity": "CRITICAL",
+  "cvss_v4": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:N",
+  "source": "https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3",
+  "checkedBy": "iKnowMyMac, by hand, 2026-11-09"
+ }
+}

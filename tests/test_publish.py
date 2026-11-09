@@ -52,6 +52,9 @@ class World:
         self.sources = os.path.join(self.dir, "sources")
         os.makedirs(self.sources)
         self.site = os.path.join(self.dir, "site")
+        # The committed supplement/ would add its rows to every test; tests that want hand-checked records make their own.
+        self.supplement = os.path.join(self.dir, "supplement")
+        os.makedirs(self.supplement)
 
     def make_key(self, path):
         subprocess.run([self.openssl, "genpkey", "-algorithm", "ED25519", "-out", path], check=True, capture_output=True)
@@ -69,7 +72,8 @@ class World:
 
     def run(self, now, *extra, key=None, public=None, previous=True, env=None):
         argv = ["run", "--site", self.site, "--source-dir", self.sources, "--work", os.path.join(self.dir, "work"),
-                "--key-file", key or self.key, "--public-key-file", public or self.public, "--now", now, *extra]
+                "--key-file", key or self.key, "--public-key-file", public or self.public, "--now", now,
+                "--supplement", self.supplement, *extra]
         if previous and os.path.isdir(self.site):
             argv += ["--previous", self.site]
         out, err = io.StringIO(), io.StringIO()
@@ -216,6 +220,66 @@ class PublishTests(unittest.TestCase):
         with open(os.path.join(w.site, publish.RUNTIMES), "ab") as fh:
             fh.write(b" ")
         self.assertEqual(publish.main(["verify", "--site", w.site, "--public-key-file", w.public]), 1)
+
+    def test_hand_checked_records_add_rows_publish_on_their_own_and_yield_to_the_public_record(self):
+        w = World(self)
+        w.export([A, B], [H])
+        self.assertEqual(w.run("2026-10-04T04:17:00Z")[0], 0)
+        self.assertEqual(w.status()["supplement"]["records"], 0)
+        # A record the exports lack: the exports did not change, the supplement did, so a list is published with its row.
+        rsc = {"id": "GHSA-aaaa-bbbb-cccc", "modified": "2026-09-20T00:00:00Z", "published": "2026-09-20T00:00:00Z",
+               "summary": "A hole in epsilon-demo", "database_specific": {"severity": "CRITICAL", "source": "https://example.com/advisory"},
+               "affected": [{"package": {"ecosystem": "npm", "name": "epsilon-demo"},
+                             "ranges": [{"type": "SEMVER", "events": [{"introduced": "1.0.0"}, {"fixed": "1.0.9"},
+                                                                      {"introduced": "1.1.0"}, {"fixed": "1.1.10"}]}]}]}
+        with open(os.path.join(w.supplement, rsc["id"] + ".json"), "w") as fh:
+            json.dump(rsc, fh)
+        code, out = w.run("2026-10-04T05:17:00Z")
+        self.assertEqual(code, 0, out)
+        self.assertIn("the hand-checked records changed: GHSA-aaaa-bbbb-cccc", out)
+        self.assertEqual(w.names(), ["alpha-demo", "beta-demo", "delta-demo", "epsilon-demo"])
+        self.assertEqual(w.status()["supplement"]["ids"], ["GHSA-aaaa-bbbb-cccc"])
+        row = next(r for r in w.lines(publish.DELTA)[1:] if r["n"] == "epsilon-demo")
+        self.assertEqual(row["r"], [{"i": "1.0.0", "f": "1.0.9"}, {"i": "1.1.0", "f": "1.1.10"}])
+        self.assertEqual(row["s"], "critical")
+        # Unchanged since: nothing new.
+        self.assertIn("Nothing new", w.run("2026-10-04T06:17:00Z")[1])
+        # The public export now carries the same id, newer: its version of the row is the one published.
+        public = json.loads(json.dumps(rsc))
+        public["modified"] = "2026-10-05T00:00:00Z"
+        public["summary"] = "The public summary"
+        w.export([A, B, public], [H])
+        code, out = w.run("2026-10-05T07:17:00Z")
+        self.assertEqual(code, 0, out)
+        row = next(r for r in w.lines(publish.DELTA)[1:] if r["n"] == "epsilon-demo")
+        self.assertEqual(row["t"], "The public summary")
+        # A record that gives no row, or names no source, is refused and nothing changes.
+        before = {name: w.read(name) for name in os.listdir(w.site)}
+        low = dict(rsc, id="GHSA-dddd-eeee-ffff", database_specific={"severity": "LOW", "source": "https://example.com/a"})
+        with open(os.path.join(w.supplement, low["id"] + ".json"), "w") as fh:
+            json.dump(low, fh)
+        code, out = w.run("2026-10-05T08:17:00Z")
+        self.assertEqual(code, 1)
+        self.assertIn("give no row", out)
+        low["database_specific"] = {"severity": "CRITICAL"}
+        with open(os.path.join(w.supplement, low["id"] + ".json"), "w") as fh:
+            json.dump(low, fh)
+        code, out = w.run("2026-10-05T08:17:00Z")
+        self.assertEqual(code, 1)
+        self.assertIn("must be the https address", out)
+        self.assertEqual({name: w.read(name) for name in os.listdir(w.site)}, before)
+
+    def test_the_committed_supplement_builds(self):
+        build, _ = publish.load_builder()
+        folder, record = publish.load_supplement(build, publish.SUPPLEMENT)
+        self.assertIn("GHSA-xqc2-xf4c-x3h3", record["ids"])
+        rows, _, _ = build.build([("supplement", folder)])
+        webpack = next(r for r in rows if r["n"] == "react-server-dom-webpack")
+        self.assertEqual(webpack["s"], "critical")
+        self.assertNotIn("v", webpack, "ranges only, so a 19.2.8 copy is told 19.2.9, not the newest fix")
+        self.assertIn({"i": "19.2.0", "f": "19.2.9"}, webpack["r"])
+        self.assertEqual(sorted(r["n"] for r in rows if r["id"] == "GHSA-xqc2-xf4c-x3h3"),
+                         ["react-server-dom-parcel", "react-server-dom-turbopack", "react-server-dom-webpack"])
 
     def test_nothing_new_publishes_nothing_and_says_so(self):
         w = World(self)

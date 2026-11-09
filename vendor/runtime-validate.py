@@ -64,9 +64,10 @@ def problems_in(data, raw_size, previous=None):
 
     ids = {}
     # App 1.7.1: `incidents2` holds cards 1.5.1–1.7.0 must not see (one about Java would read "nothing affected" there);
-    # it is checked like `incidents`, and the limit is for the two together.
-    for key in ("runtimes", "releases", "roots", "fixedPackages", "incidents", "incidents2"):
-        rows = data.get(key, [])
+    # it is checked like `incidents`, and the limit is for the two together. App 1.7.3: `incidents3` holds cards that name
+    # npm or Maven packages (before 1.7.3 a card's Fix All offered pip for every package it covered); the limit is for all three.
+    for key in ("runtimes", "releases", "roots", "fixedPackages", "incidents", "incidents2", "incidents3"):
+        rows = data.setdefault(key, [])
         if not need(isinstance(rows, list), "%s must be a list" % key):
             data[key] = rows = []
         need(len(rows) <= LIMITS.get(key, 64), "%s has %d rows, over the limit" % (key, len(rows)))
@@ -77,9 +78,11 @@ def problems_in(data, raw_size, previous=None):
             need(rid not in seen, "%s: id %r twice" % (key, rid))
             seen.add(rid)
         ids[key] = seen
-    need(len(data["incidents"]) + len(data["incidents2"]) <= LIMITS["incidents"], "incidents and incidents2 have more than %d rows" % LIMITS["incidents"])
+    need(len(data["incidents"]) + len(data["incidents2"]) + len(data["incidents3"]) <= LIMITS["incidents"],
+         "incidents, incidents2 and incidents3 have more than %d rows" % LIMITS["incidents"])
     need(not (ids["incidents"] & ids["incidents2"]), "an incident id is in both incidents and incidents2")
-    ids["incidents"] = ids["incidents"] | ids["incidents2"]
+    need(not ((ids["incidents"] | ids["incidents2"]) & ids["incidents3"]), "an incident id is in incidents3 and another table")
+    ids["incidents"] = ids["incidents"] | ids["incidents2"] | ids["incidents3"]
 
     lines = {}
     for row in data["runtimes"]:
@@ -152,7 +155,7 @@ def problems_in(data, raw_size, previous=None):
             need(row["incident"] in ids["incidents"], "%s: incident %r is not in incidents" % (where, row["incident"]))
         source(row, where)
 
-    for row in data["incidents"] + data["incidents2"]:
+    for row in data["incidents"] + data["incidents2"] + data["incidents3"]:
         where = "incidents[%s]" % row.get("id")
         text(row.get("title"), where + ".title")
         text(row.get("summary"), where + ".summary")
@@ -169,6 +172,11 @@ def problems_in(data, raw_size, previous=None):
             for adv in covers.get("packageAdvisories", []):
                 need(isinstance(adv, dict) and adv.get("e") in ("npm", "pypi", "maven") and adv.get("n") and adv.get("id"),
                      "%s: a packageAdvisory needs e (npm/pypi/maven), n and id" % where)
+        # A card naming an npm or Maven package belongs in incidents3: apps before 1.7.3 would offer pip for it.
+        if row in data["incidents"] or row in data["incidents2"]:
+            for adv in (covers or {}).get("packageAdvisories", []) if isinstance(covers, dict) else []:
+                need(not isinstance(adv, dict) or adv.get("e") == "pypi",
+                     "%s: covers the %s package %r; cards naming npm or Maven packages go in incidents3" % (where, adv.get("e") if isinstance(adv, dict) else "?", adv.get("n") if isinstance(adv, dict) else "?"))
         # A card about a runtime 1.5.1–1.7.0 do not look for belongs in incidents2.
         if row in data["incidents"]:
             for ref in (covers or {}).get("releases", []) if isinstance(covers, dict) else []:
@@ -202,7 +210,7 @@ def main(argv):
         print("%s: %s" % (path, line))
     if not problems:
         print("%s: valid (%d releases, %d roots, %d incidents)" % (path, len(data["releases"]), len(data["roots"]),
-                                                                  len(data["incidents"]) + len(data["incidents2"])))
+                                                                  len(data["incidents"]) + len(data["incidents2"]) + len(data["incidents3"])))
     return 1 if problems else 0
 
 

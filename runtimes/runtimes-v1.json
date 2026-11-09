@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-10-29T12:00:00Z",
+ "generated": "2026-11-09T05:37:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -451,6 +451,49 @@
    },
    "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
    "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
+  },
+  {
+   "id": "react-rsc-2026-10",
+   "title": "React Server Components and Next.js",
+   "date": "2026-10-14",
+   "severity": "critical",
+   "summary": "A crafted request can run code on a server that renders React Server Components, before any login. Next.js carries its own copy of that code and has a second way in through SVG images. Fixed in React 19.2.9 (or 19.0.9, 19.1.10, 19.3.1) and Next.js 16.4.1 or 15.5.28.",
+   "notAffected": "Projects that use React only in the browser are not affected. A dev server only this Mac can reach is much harder to attack, but should still be updated, and so should any site built from it.",
+   "covers": {
+    "packageAdvisories": [
+     {
+      "e": "npm",
+      "n": "react-server-dom-parcel",
+      "id": "GHSA-xqc2-xf4c-x3h3"
+     },
+     {
+      "e": "npm",
+      "n": "react-server-dom-turbopack",
+      "id": "GHSA-xqc2-xf4c-x3h3"
+     },
+     {
+      "e": "npm",
+      "n": "react-server-dom-webpack",
+      "id": "GHSA-xqc2-xf4c-x3h3"
+     },
+     {
+      "e": "npm",
+      "n": "next",
+      "id": "GHSA-673q-mjm6-r5xr"
+     },
+     {
+      "e": "npm",
+      "n": "next",
+      "id": "GHSA-2464-fhr4-w9xw"
+     },
+     {
+      "e": "npm",
+      "n": "next",
+      "id": "GHSA-p3m5-59mp-jv5r"
+     }
+    ]
+   },
+   "source": "https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3"
   }
  ],
  "incidents2": [

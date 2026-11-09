@@ -40,6 +40,23 @@ def hole(n, name, fixed="2.0.0"):
                           "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": fixed}]}]}]}
 
 
+# The workflow's own summary and outputs belong to the real publish run: a test that wrote there made the job's summary
+# say "3 rows". They are cleared for the whole file (a test that wants them passes its own file to World.run).
+_WORKFLOW_FILES = ("GITHUB_STEP_SUMMARY", "GITHUB_OUTPUT")
+_saved_workflow_files = {}
+
+
+def setUpModule():
+    for name in _WORKFLOW_FILES:
+        _saved_workflow_files[name] = os.environ.pop(name, None)
+
+
+def tearDownModule():
+    for name, value in _saved_workflow_files.items():
+        if value is not None:
+            os.environ[name] = value
+
+
 class World:
     """A throwaway folder with a key pair, source zips and a site."""
 
@@ -78,6 +95,10 @@ class World:
             argv += ["--previous", self.site]
         out, err = io.StringIO(), io.StringIO()
         old_env = dict(os.environ)
+        # The workflow's own summary and outputs are never a test's: a test run that wrote there made the publish
+        # job's summary say "3 rows". A test that wants them passes its own file in `env`.
+        for name in ("GITHUB_STEP_SUMMARY", "GITHUB_OUTPUT"):
+            os.environ.pop(name, None)
         os.environ.update(env or {})
         try:
             with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -280,6 +301,24 @@ class PublishTests(unittest.TestCase):
         self.assertIn({"i": "19.2.0", "f": "19.2.9"}, webpack["r"])
         self.assertEqual(sorted(r["n"] for r in rows if r["id"] == "GHSA-xqc2-xf4c-x3h3"),
                          ["react-server-dom-parcel", "react-server-dom-turbopack", "react-server-dom-webpack"])
+
+    def test_a_test_run_never_writes_to_the_workflows_own_summary_or_outputs(self):
+        w = World(self)
+        w.export([A, B], [H])
+        summary, output = os.path.join(w.dir, "workflow-summary"), os.path.join(w.dir, "workflow-output")
+        saved = {name: os.environ.get(name) for name in ("GITHUB_STEP_SUMMARY", "GITHUB_OUTPUT")}
+        os.environ["GITHUB_STEP_SUMMARY"], os.environ["GITHUB_OUTPUT"] = summary, output
+        try:
+            code, out = w.run("2026-10-04T04:17:00Z")
+        finally:
+            for name, value in saved.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+        self.assertEqual(code, 0, out)
+        self.assertFalse(os.path.exists(summary), "the publish job's summary is the real run's alone")
+        self.assertFalse(os.path.exists(output))
 
     def test_nothing_new_publishes_nothing_and_says_so(self):
         w = World(self)

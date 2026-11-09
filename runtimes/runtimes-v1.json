@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-11-09T05:37:00Z",
+ "generated": "2026-11-09T06:05:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -451,7 +451,26 @@
    },
    "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
    "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
-  },
+  }
+ ],
+ "incidents2": [
+  {
+   "id": "java-2026-10",
+   "title": "Java October security update",
+   "date": "2026-10-20",
+   "severity": "critical",
+   "summary": "Oracle's October update has 55 Java fixes, 49 of them reachable over a network without a login. Two fixes that followed on 21 and 24 October (both 9.1) make Java stop trusting the eMudhra certificates, so builds from 20 October still need an update.",
+   "notAffected": "Java 26 got no October update: it is at end of life, so move to Java 27 or the long-term Java 25.",
+   "covers": {
+    "releases": [
+     "java-2026-10-20",
+     "java-2026-10-24"
+    ]
+   },
+   "source": "https://www.oracle.com/security-alerts/cpuoct2026.html"
+  }
+ ],
+ "incidents3": [
   {
    "id": "react-rsc-2026-10",
    "title": "React Server Components and Next.js",
@@ -494,23 +513,6 @@
     ]
    },
    "source": "https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3"
-  }
- ],
- "incidents2": [
-  {
-   "id": "java-2026-10",
-   "title": "Java October security update",
-   "date": "2026-10-20",
-   "severity": "critical",
-   "summary": "Oracle's October update has 55 Java fixes, 49 of them reachable over a network without a login. Two fixes that followed on 21 and 24 October (both 9.1) make Java stop trusting the eMudhra certificates, so builds from 20 October still need an update.",
-   "notAffected": "Java 26 got no October update: it is at end of life, so move to Java 27 or the long-term Java 25.",
-   "covers": {
-    "releases": [
-     "java-2026-10-20",
-     "java-2026-10-24"
-    ]
-   },
-   "source": "https://www.oracle.com/security-alerts/cpuoct2026.html"
   }
  ]
 }

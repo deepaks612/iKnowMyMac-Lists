@@ -28,8 +28,8 @@ A file that is invalid, uses a banned word, or is not newer than the published o
 
 ## Hand-checked records (`supplement/`)
 Some advisories never reach the public exports: a project publishes it on its own GitHub page, and it is not
-reviewed into the GitHub Advisory Database, so OSV does not carry it. React's GHSA-xqc2-xf4c-x3h3 (October 2026) is
-one. `supplement/` holds such advisories as OSV-format records, one `<id>.json` each, written from the project's own
+reviewed into the GitHub Advisory Database, so OSV does not carry it. React's GHSA-xqc2-xf4c-x3h3 (October 2026) was
+one until OSV carried it on 10 November 2026, and the folder is empty now. `supplement/` holds such advisories as OSV-format records, one `<id>.json` each, written from the project's own
 advisory (`database_specific.source`). They are built by the same rules as the exports.
 
 - When an export later carries the same id, the export's record is newer and replaces ours, so a hand-checked record

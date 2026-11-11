@@ -291,16 +291,16 @@ class PublishTests(unittest.TestCase):
         self.assertEqual({name: w.read(name) for name in os.listdir(w.site)}, before)
 
     def test_the_committed_supplement_builds(self):
+        # Empty since OSV carried GHSA-xqc2-xf4c-x3h3 (10 Nov 2026). Any record added later must still give rows.
         build, _ = publish.load_builder()
         folder, record = publish.load_supplement(build, publish.SUPPLEMENT)
-        self.assertIn("GHSA-xqc2-xf4c-x3h3", record["ids"])
-        rows, _, _ = build.build([("supplement", folder)])
-        webpack = next(r for r in rows if r["n"] == "react-server-dom-webpack")
-        self.assertEqual(webpack["s"], "critical")
-        self.assertNotIn("v", webpack, "ranges only, so a 19.2.8 copy is told 19.2.9, not the newest fix")
-        self.assertIn({"i": "19.2.0", "f": "19.2.9"}, webpack["r"])
-        self.assertEqual(sorted(r["n"] for r in rows if r["id"] == "GHSA-xqc2-xf4c-x3h3"),
-                         ["react-server-dom-parcel", "react-server-dom-turbopack", "react-server-dom-webpack"])
+        self.assertNotIn("GHSA-xqc2-xf4c-x3h3", record["ids"], "OSV carries it now; the public record is used")
+        self.assertEqual(record["records"], len(record["ids"]))
+        if folder:
+            rows, _, _ = build.build([("supplement", folder)])
+            self.assertLessEqual(set(record["ids"]), {row["id"] for row in rows})
+        else:
+            self.assertEqual(record["ids"], [])
 
     def test_a_test_run_never_writes_to_the_workflows_own_summary_or_outputs(self):
         w = World(self)

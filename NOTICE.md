@@ -27,9 +27,9 @@ Sources
 
 4. Hand-checked records (supplement/ in this repository)
    Advisories a project published on its own page that the sources above did not carry yet, written as OSV
-   records from that advisory, which each record names. Today: React, GHSA-xqc2-xf4c-x3h3
-   (https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3). When a source above carries the same
-   advisory, its record is used instead.
+   records from that advisory, which each record names. Today: none. React's GHSA-xqc2-xf4c-x3h3 was one until
+   OSV carried it on 10 November 2026 (as CVE-2026-126187). When a source above carries the same advisory, its
+   record is used instead.
 
 What was changed
 ----------------

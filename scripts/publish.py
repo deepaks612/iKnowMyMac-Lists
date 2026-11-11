@@ -67,7 +67,7 @@ SOURCES = [
 LICENCE_LINE = ("Built from OpenSSF Malicious Packages (Apache-2.0), the GitHub Advisory Database (CC-BY-4.0) and the "
                 "PyPI Advisory Database (CC-BY-4.0), as exported by OSV.dev. Changed: reduced to one row per advisory "
                 "and package, malicious releases and critical or high vulnerabilities with a fix only. This list is "
-                "offered under CC-BY-4.0; see NOTICE.txt. A few rows come from records "
+                "offered under CC-BY-4.0; see NOTICE.txt. Rows can also come from records "
                 "checked by hand against a project's own published advisory (supplement/ in this repository).")
 
 

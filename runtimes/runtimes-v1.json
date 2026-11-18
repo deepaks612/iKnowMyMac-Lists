@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-11-12T06:30:00Z",
+ "generated": "2026-11-19T06:00:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -184,6 +184,154 @@
     }
    ],
    "source": "https://www.oracle.com/java/technologies/java-se-support-roadmap.html"
+  },
+  {
+   "id": "mysql",
+   "name": "MySQL",
+   "lineDepth": 2,
+   "lines": [
+    {
+     "line": "26.10",
+     "status": "supported"
+    },
+    {
+     "line": "26.7",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.7",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "9.6",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.5",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.4",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.3",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.2",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.1",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.0",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.4",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "8.3",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.2",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.1",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.0",
+     "status": "endOfLife"
+    },
+    {
+     "line": "5.7",
+     "status": "endOfLife"
+    }
+   ],
+   "source": "https://dev.mysql.com/doc/refman/8.4/en/mysql-releases.html"
+  },
+  {
+   "id": "mysqlshell",
+   "name": "MySQL Shell",
+   "lineDepth": 2,
+   "lines": [
+    {
+     "line": "26.10",
+     "status": "supported"
+    },
+    {
+     "line": "26.7",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.7",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "9.6",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.5",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.4",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.3",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.2",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.1",
+     "status": "endOfLife"
+    },
+    {
+     "line": "9.0",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.4",
+     "status": "supported",
+     "lts": true
+    },
+    {
+     "line": "8.3",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.2",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.1",
+     "status": "endOfLife"
+    },
+    {
+     "line": "8.0",
+     "status": "endOfLife"
+    },
+    {
+     "line": "5.7",
+     "status": "endOfLife"
+    }
+   ],
+   "source": "https://dev.mysql.com/doc/refman/8.4/en/mysql-releases.html"
   }
  ],
  "releases": [
@@ -371,6 +519,76 @@
      "17": null
     }
    }
+  },
+  {
+   "id": "mysql-2026-11-17",
+   "runtime": "mysql",
+   "date": "2026-11-17",
+   "severity": "critical",
+   "title": "Oracle MySQL November 2026 Critical Security Patch Update",
+   "fixed": {
+    "26.10": "26.10.0.1",
+    "9.7": "9.7.4.1",
+    "8.4": "8.4.13.1"
+   },
+   "cves": [
+    "CVE-2026-114952",
+    "CVE-2026-92392",
+    "CVE-2026-114951",
+    "CVE-2026-114950",
+    "CVE-2026-114949",
+    "CVE-2026-127428"
+   ],
+   "source": "https://www.oracle.com/security-alerts/cspunov2026.html",
+   "vendors": {
+    "homebrew": {
+     "26.10": null,
+     "9.7": null,
+     "8.4": null
+    },
+    "oracle": {
+     "26.10": null,
+     "9.7": null,
+     "8.4": null
+    },
+    "mamp": {
+     "26.10": null,
+     "9.7": null,
+     "8.4": null
+    },
+    "dbngin": {
+     "26.10": null,
+     "9.7": null,
+     "8.4": null
+    },
+    "herd": {
+     "26.10": null,
+     "9.7": null,
+     "8.4": null
+    }
+   }
+  },
+  {
+   "id": "mysqlshell-2026-11-17",
+   "runtime": "mysqlshell",
+   "date": "2026-11-17",
+   "severity": "critical",
+   "title": "Oracle MySQL Shell November 2026 Critical Security Patch Update",
+   "fixed": {
+    "26.10": "26.10.0.1"
+   },
+   "cves": [
+    "CVE-2026-115557"
+   ],
+   "source": "https://www.oracle.com/security-alerts/cspunov2026.html",
+   "vendors": {
+    "homebrew": {
+     "26.10": null
+    },
+    "oracle": {
+     "26.10": null
+    }
+   }
   }
  ],
  "roots": [
@@ -548,6 +766,23 @@
     ]
    },
    "source": "https://github.com/react/react/security/advisories/GHSA-xqc2-xf4c-x3h3"
+  }
+ ],
+ "incidents4": [
+  {
+   "id": "mysql-2026-11",
+   "title": "MySQL client programs",
+   "date": "2026-11-17",
+   "severity": "critical",
+   "summary": "A flaw in MySQL's client programs lets someone on the network read and change data with no login (9.1). MySQL Shell 26.10.0 has a second flaw (9.8). The fixed builds are announced but not out yet. Until then, connect MySQL tools only to servers you run, and keep a local MySQL reachable from this Mac only.",
+   "notAffected": "MariaDB is not affected. MySQL 8.0 no longer gets security fixes, so move it to 8.4.",
+   "covers": {
+    "releases": [
+     "mysql-2026-11-17",
+     "mysqlshell-2026-11-17"
+    ]
+   },
+   "source": "https://www.oracle.com/security-alerts/cspunov2026.html"
   }
  ]
 }

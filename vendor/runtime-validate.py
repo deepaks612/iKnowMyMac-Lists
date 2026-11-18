@@ -13,9 +13,17 @@ import sys
 
 MAX_BYTES = 512 * 1024
 LIMITS = {"lines": 64, "releases": 256, "roots": 64, "fixedPackages": 64, "incidents": 64}
-RUNTIMES = {"node": 1, "php": 2, "go": 2, "java": 1}
+RUNTIMES = {"node": 1, "php": 2, "go": 2, "java": 1, "mysql": 2, "mysqlshell": 2}
 # App 1.7.1: Java vendors a release may name in `vendors` (JavaVendor in the app).
 JAVA_VENDORS = {"oracle", "temurin", "zulu", "corretto", "microsoft", "liberica", "jetbrains", "homebrew", "graalvm", "openjdk"}
+# App 1.8.5 (P142): who ships MySQL and MySQL Shell (MySQLVendor in the app). mise and asdf unpack Oracle's archives: `oracle`.
+MYSQL_VENDORS = {"homebrew", "oracle", "mamp", "dbngin", "herd"}
+VENDORS = {"java": JAVA_VENDORS, "mysql": MYSQL_VENDORS, "mysqlshell": MYSQL_VENDORS}
+# The runtimes each card table may cover: older apps read the older tables only, and a card about a runtime they never
+# look for would read "Nothing on this Mac is affected" there.
+RUNTIMES_1_5_1 = {"node", "php", "go"}
+RUNTIMES_1_8_5 = {"mysql", "mysqlshell"}
+CARD_TABLES = ("incidents", "incidents2", "incidents3", "incidents4")
 SEVERITIES = {"critical", "high", "medium", "low"}
 BANNED = re.compile(r"\b(safe|secure|security guaranteed|protected)\b", re.I)
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -66,7 +74,8 @@ def problems_in(data, raw_size, previous=None):
     # App 1.7.1: `incidents2` holds cards 1.5.1–1.7.0 must not see (one about Java would read "nothing affected" there);
     # it is checked like `incidents`, and the limit is for the two together. App 1.7.3: `incidents3` holds cards that name
     # npm or Maven packages (before 1.7.3 a card's Fix All offered pip for every package it covered); the limit is for all three.
-    for key in ("runtimes", "releases", "roots", "fixedPackages", "incidents", "incidents2", "incidents3"):
+    # App 1.8.5: `incidents4` holds cards about the runtimes added in 1.8.5 (MySQL, MySQL Shell); the limit spans all four.
+    for key in ("runtimes", "releases", "roots", "fixedPackages") + CARD_TABLES:
         rows = data.setdefault(key, [])
         if not need(isinstance(rows, list), "%s must be a list" % key):
             data[key] = rows = []
@@ -78,11 +87,12 @@ def problems_in(data, raw_size, previous=None):
             need(rid not in seen, "%s: id %r twice" % (key, rid))
             seen.add(rid)
         ids[key] = seen
-    need(len(data["incidents"]) + len(data["incidents2"]) + len(data["incidents3"]) <= LIMITS["incidents"],
-         "incidents, incidents2 and incidents3 have more than %d rows" % LIMITS["incidents"])
+    need(sum(len(data[key]) for key in CARD_TABLES) <= LIMITS["incidents"],
+         "incidents, incidents2, incidents3 and incidents4 have more than %d rows" % LIMITS["incidents"])
     need(not (ids["incidents"] & ids["incidents2"]), "an incident id is in both incidents and incidents2")
     need(not ((ids["incidents"] | ids["incidents2"]) & ids["incidents3"]), "an incident id is in incidents3 and another table")
-    ids["incidents"] = ids["incidents"] | ids["incidents2"] | ids["incidents3"]
+    need(not ((ids["incidents"] | ids["incidents2"] | ids["incidents3"]) & ids["incidents4"]), "an incident id is in incidents4 and another table")
+    ids["incidents"] = ids["incidents"] | ids["incidents2"] | ids["incidents3"] | ids["incidents4"]
 
     lines = {}
     for row in data["runtimes"]:
@@ -120,7 +130,7 @@ def problems_in(data, raw_size, previous=None):
         vendors = row.get("vendors", {})
         if need(isinstance(vendors, dict), "%s: vendors must be an object" % where):
             for vendor, by_line in vendors.items():
-                need(runtime == "java" and vendor in JAVA_VENDORS, "%s: vendors names %r, not a Java vendor the app knows" % (where, vendor))
+                need(vendor in VENDORS.get(runtime, set()), "%s: vendors names %r, not a %s vendor the app knows" % (where, vendor, runtime))
                 if not need(isinstance(by_line, dict), "%s: vendors.%s must be an object" % (where, vendor)):
                     continue
                 for line, version in by_line.items():
@@ -155,7 +165,7 @@ def problems_in(data, raw_size, previous=None):
             need(row["incident"] in ids["incidents"], "%s: incident %r is not in incidents" % (where, row["incident"]))
         source(row, where)
 
-    for row in data["incidents"] + data["incidents2"] + data["incidents3"]:
+    for row in [row for key in CARD_TABLES for row in data[key]]:
         where = "incidents[%s]" % row.get("id")
         text(row.get("title"), where + ".title")
         text(row.get("summary"), where + ".summary")
@@ -177,12 +187,16 @@ def problems_in(data, raw_size, previous=None):
             for adv in (covers or {}).get("packageAdvisories", []) if isinstance(covers, dict) else []:
                 need(not isinstance(adv, dict) or adv.get("e") == "pypi",
                      "%s: covers the %s package %r; cards naming npm or Maven packages go in incidents3" % (where, adv.get("e") if isinstance(adv, dict) else "?", adv.get("n") if isinstance(adv, dict) else "?"))
-        # A card about a runtime 1.5.1–1.7.0 do not look for belongs in incidents2.
-        if row in data["incidents"]:
-            for ref in (covers or {}).get("releases", []) if isinstance(covers, dict) else []:
-                release = next((r for r in data["releases"] if r.get("id") == ref), {})
-                need(release.get("runtime") in ("node", "php", "go"),
-                     "%s: covers a %s release; cards about runtimes added after 1.5.1 go in incidents2" % (where, release.get("runtime")))
+        # A card about a runtime 1.5.1–1.7.0 do not look for belongs in incidents2; one about a runtime added in 1.8.5
+        # (MySQL, MySQL Shell) in incidents4, which 1.5.1–1.8.0 never read.
+        for ref in (covers or {}).get("releases", []) if isinstance(covers, dict) else []:
+            release = next((r for r in data["releases"] if r.get("id") == ref), {})
+            if row in data["incidents"]:
+                need(release.get("runtime") in RUNTIMES_1_5_1,
+                     "%s: covers a %s release; cards about runtimes added after 1.5.1 go in incidents2 (Java) or incidents4 (MySQL)" % (where, release.get("runtime")))
+            elif row in data["incidents2"] or row in data["incidents3"]:
+                need(release.get("runtime") not in RUNTIMES_1_8_5,
+                     "%s: covers a %s release; cards about runtimes added in 1.8.5 go in incidents4" % (where, release.get("runtime")))
         if "learnMore" in row:
             need(isinstance(row["learnMore"], str) and row["learnMore"].startswith("https://iknowmymac.com/"),
                  "%s: learnMore must be a page on iknowmymac.com" % where)
@@ -210,7 +224,7 @@ def main(argv):
         print("%s: %s" % (path, line))
     if not problems:
         print("%s: valid (%d releases, %d roots, %d incidents)" % (path, len(data["releases"]), len(data["roots"]),
-                                                                  len(data["incidents"]) + len(data["incidents2"]) + len(data["incidents3"])))
+                                                                  sum(len(data[key]) for key in CARD_TABLES)))
     return 1 if problems else 0
 
 

@@ -1,7 +1,7 @@
 {
  "format": 1,
  "kind": "runtimes",
- "generated": "2026-11-09T06:05:00Z",
+ "generated": "2026-11-12T06:30:00Z",
  "runtimes": [
   {
    "id": "node",
@@ -205,6 +205,27 @@
     "CVE-2026-106069"
    ],
    "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases"
+  },
+  {
+   "id": "node-2026-11-11",
+   "runtime": "node",
+   "date": "2026-11-11",
+   "severity": "high",
+   "title": "Node.js November 2026 security release",
+   "fixed": {
+    "26": "26.13.1",
+    "24": "24.22.3",
+    "22": "22.23.5"
+   },
+   "cves": [
+    "CVE-2026-123863",
+    "CVE-2026-123864",
+    "CVE-2026-123865",
+    "CVE-2026-123866",
+    "CVE-2026-126051",
+    "CVE-2026-123872"
+   ],
+   "source": "https://nodejs.org/en/blog/vulnerability/november-2026-security-releases"
   },
   {
    "id": "php-2026-10-21",
@@ -451,6 +472,20 @@
    },
    "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
    "learnMore": "https://iknowmymac.com/guides/nodejs-october-2026-security-release-mac"
+  },
+  {
+   "id": "node-2026-11",
+   "title": "Node.js November security release",
+   "date": "2026-11-11",
+   "severity": "high",
+   "summary": "Sixteen fixes, seven of them high: HTTP/2 and TLS servers that a remote peer can crash or make leak memory, and a TLS 1.2 renegotiation that can get past a client certificate check.",
+   "covers": {
+    "releases": [
+     "node-2026-11-11"
+    ]
+   },
+   "source": "https://nodejs.org/en/blog/vulnerability/november-2026-security-releases",
+   "learnMore": "https://iknowmymac.com/guides/nodejs-november-2026-security-release-mac"
   }
  ],
  "incidents2": [
